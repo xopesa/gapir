@@ -7,6 +7,7 @@ import {
   Fire,
   GearSix,
   Medal,
+  SignOut,
   SpeakerHigh,
   Star,
 } from "@phosphor-icons/react";
@@ -22,6 +23,7 @@ import {
 } from "@/src/components/ui";
 import { activity } from "@/src/mocks";
 import { cn, formatNumber } from "@/src/lib/utils";
+import { useAuthStore } from "@/src/stores/auth-store";
 import { useUserStore } from "@/src/stores/user-store";
 
 const settingsSchema = z.object({
@@ -33,6 +35,7 @@ type SettingsValues = z.infer<typeof settingsSchema>;
 
 export function ProfileScreen() {
   const { xp, streak, completedLessons } = useUserStore();
+  const logout = useAuthStore((state) => state.logout);
   const { register, handleSubmit, formState } = useForm<SettingsValues>({
     resolver: zodResolver(settingsSchema),
     defaultValues: { sound: true, reminders: true },
@@ -47,7 +50,12 @@ export function ProfileScreen() {
           <h1>Алексей Морозов</h1>
           <p>Изучает узбекский с 12 июня 2026</p>
         </div>
-        <Button variant="secondary">Редактировать</Button>
+        <div className="profile-actions">
+          <Button variant="secondary">Редактировать</Button>
+          <Button variant="ghost" onClick={logout}>
+            <SignOut weight="bold" /> Выйти
+          </Button>
+        </div>
       </Card>
 
       <div className="stats-grid">

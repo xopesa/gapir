@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
-import { AppShell } from "@/src/components/layout/app-shell";
+import { AuthGate } from "@/src/features/auth/components/auth-gate";
 import { QueryProvider } from "@/src/lib/query-client";
 import "./globals.css";
 
@@ -46,7 +46,7 @@ export default function RootLayout({
     <html lang="ru">
       <body className={`${jakarta.variable} antialiased`}>
         <QueryProvider>
-          <AppShell>{children}</AppShell>
+          <AuthGate>{children}</AuthGate>
         </QueryProvider>
       </body>
     </html>
