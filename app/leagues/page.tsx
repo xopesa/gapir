@@ -1,5 +1,5 @@
-import { LeaguesScreen } from "@/src/features/leagues/components/leagues-screen";
+import { redirect } from "next/navigation";
 
 export default function LeaguesPage() {
-  return <LeaguesScreen />;
+  redirect("/");
 }

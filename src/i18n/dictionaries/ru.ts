@@ -1,0 +1,66 @@
+export const ru = {
+  common: {
+    save: "Сохранить", cancel: "Отмена", continue: "Продолжить", loading: "Загрузка…",
+    draft: "Черновик", published: "Опубликовано", edit: "Изменить", create: "Создать",
+    back: "Назад", logout: "Выйти", language: "Язык интерфейса", error: "Что-то пошло не так",
+  },
+  nav: { learn: "Обучение", practice: "Практика", aiAssistant: "AI Ассистент", profile: "Профиль", admin: "Админ-панель" },
+  aiAssistant: {
+    title: "AI Ассистент", subtitle: "Практикуйте живую речь с персональным AI-преподавателем.", available: "Доступно", soon: "Скоро", mockAi: "Mock AI", back: "Назад",
+    unavailableTitle: "AI Ассистент временно недоступен", unavailableText: "Функция отключена в настройках приложения. Попробуйте позже.", tutorDisabled: "AI Tutor временно отключён.",
+    features: { tutor: "AI Tutor", tutorText: "Разговорная практика с исправлениями и подсказками.", conversation: "Свободный разговор", grammar: "Проверка грамматики", translation: "Перевод с объяснением", vocabulary: "Словарь", pronunciation: "Произношение", history: "История", historyText: "Вернитесь к предыдущим разговорам." },
+    setup: { title: "Новый разговор", subtitle: "Выберите направление, уровень и тему.", direction: "Направление", uzToZh: "Я знаю узбекский и изучаю китайский", zhToUz: "Я знаю китайский и изучаю узбекский", uzToZhText: "Объяснения на узбекском, практика на китайском.", zhToUzText: "Объяснения на китайском, практика на узбекском.", level: "Уровень", beginner: "Начальный", intermediate: "Средний", advanced: "Продвинутый", topic: "Тема", freeConversation: "Свободный разговор", greeting: "Знакомство", shopping: "Магазин", restaurant: "Ресторан", travel: "Путешествие", work: "Работа", start: "Начать разговор", starting: "Создаём сессию…" },
+    chat: { title: "AI Tutor", connection: "Статус", restored: "Разговор восстановлен", placeholder: "Напишите сообщение…", send: "Отправить", microphone: "Записать голос", stopRecording: "Остановить запись", finish: "Завершить", finishTitle: "Завершить разговор?", finishText: "Сессия будет сохранена в истории.", confirmFinish: "Завершить", cancel: "Продолжить", play: "Воспроизвести ответ", pause: "Пауза", empty: "Начните разговор — преподаватель ответит после первого сообщения.", recordingTime: "Запись", voiceUnavailable: "Запись голоса не поддерживается этим браузером. Текстовый режим доступен.", voiceDisabled: "Голосовой ввод временно отключён.", tooLarge: "Запись слишком большая.", finished: "Разговор завершён", finishedText: "Результаты сохранены в вашей памяти обучения.", messages: "сообщений", xp: "XP", coins: "монет", returnHome: "К AI Ассистенту" },
+    states: { ready: "Готов", listening: "Слушаю", recording: "Записываю", uploading: "Загружаю", recognizing: "Распознаю", thinking: "Думаю", speaking: "Озвучиваю", error: "Ошибка", finished: "Завершено" },
+    response: { recognized: "Что распознано", corrected: "Правильный вариант", translation: "Перевод", explanation: "Краткое объяснение", teacher: "Ответ преподавателя", nextQuestion: "Следующий вопрос", newWords: "Новые слова", pronunciation: "Подсказки по произношению", score: "Оценка", language: "Язык" },
+    history: { title: "История разговоров", subtitle: "Последние сессии AI Tutor.", empty: "История пока пуста.", emptyText: "Начните первый разговор, и он появится здесь.", open: "Открыть", active: "Активна", finished: "Завершена", lastMessage: "Последнее сообщение" },
+    memory: { title: "Память обучения", empty: "Память появится после первого ответа AI Tutor.", level: "Уровень", streak: "Серия", totalXp: "Всего XP", coins: "Монеты", weakTopics: "Слабые темы", mistakes: "Частые ошибки", recentTopics: "Недавние темы", learnedWords: "Изученные слова" },
+    errors: { generic: "Не удалось выполнить запрос. Попробуйте ещё раз.", unauthorized: "Сессия входа истекла. Войдите снова.", validation: "Проверьте выбранные параметры.", featureDisabled: "AI Tutor сейчас недоступен.", provider: "AI-сервис временно недоступен.", stt: "Не удалось распознать речь. Попробуйте ещё раз или напишите текст.", invalidResponse: "Получен неполный ответ. Повторите сообщение.", audioTooLarge: "Аудиозапись слишком большая.", audioTooLong: "Запись превышает допустимую длительность.", audioUnsupported: "Формат аудио не поддерживается.", rateLimited: "Слишком много запросов. Подождите немного.", timeout: "Ответ занял слишком много времени. Можно повторить.", sessionNotFound: "Сессия не найдена или уже завершена.", forbidden: "Нет доступа к этой сессии.", microphoneDenied: "Доступ к микрофону запрещён. Разрешите его в настройках браузера.", microphoneFailed: "Не удалось начать запись. Текстовый режим доступен." }
+  },
+  auth: {
+    kicker: "Узбекский каждый день", promise: "Говорите увереннее с первого урока.",
+    promiseText: "Короткие занятия, живая речь и понятный прогресс — без перегруженных учебников.",
+    loginTitle: "Войдите в Gapir", loginSubtitle: "Продолжите обучение с сохранённым прогрессом.",
+    registerTitle: "Создайте аккаунт", registerSubtitle: "Начните первый урок уже сегодня.",
+    name: "Имя", email: "Email", password: "Пароль", confirmPassword: "Повторите пароль",
+    login: "Войти", register: "Зарегистрироваться", noAccount: "Нет аккаунта?", hasAccount: "Уже есть аккаунт?",
+    forgot: "Забыли пароль?", forgotTitle: "Восстановление пароля", forgotText: "В тестовой версии обратитесь к администратору, чтобы сбросить пароль.",
+    terms: "Я принимаю правила использования", invalid: "Неверный email или пароль",
+  },
+  onboarding: {
+    title: "Настроим ваш курс", subtitle: "Выберите направление и удобный ежедневный ритм.",
+    interfaceLanguage: "Язык интерфейса", targetLanguage: "Изучаемый язык",
+    sourceLanguage: "Язык объяснения", dailyGoal: "Дневная цель", minutes: "минут",
+    start: "Начать обучение",
+  },
+  learning: {
+    greeting: "Салом", subtitle: "Ещё один маленький шаг — и новый язык станет ближе.",
+    section: "Ваш маршрут", continue: "Продолжить обучение", empty: "Опубликованных уроков пока нет.",
+    progress: "Прогресс курса", lesson: "Урок", available: "Доступен", inProgress: "В процессе",
+    completed: "Завершён", locked: "Закрыт", minutes: "мин",
+  },
+  profile: {
+    title: "Профиль", level: "Уровень", currentStreak: "текущий стрик", longestStreak: "лучший стрик",
+    lessons: "уроков завершено", totalXp: "XP всего", preferences: "Настройки обучения",
+    notifications: "Напоминания", timezone: "Часовой пояс",
+  },
+  lesson: {
+    theory: "Перед началом", start: "Начать урок", check: "Проверить ответ", next: "Следующее задание",
+    correct: "Верно!", incorrect: "Попробуем дальше", finish: "Завершить урок", result: "Урок завершён",
+    correctAnswers: "Правильных ответов", earnedXp: "Получено XP", time: "Время", returnHome: "К маршруту",
+  },
+  admin: {
+    title: "Админ-панель", dashboard: "Обзор", courses: "Курсы", users: "Пользователи",
+    newCourse: "Создать курс", totalUsers: "Пользователи", totalCourses: "Все курсы",
+    publishedCourses: "Опубликовано", drafts: "Черновики", modules: "Модули", lessons: "Уроки",
+    exercises: "Упражнения", recent: "Последние изменения", source: "Язык объяснения",
+    target: "Изучаемый язык", level: "Уровень", slug: "Slug", status: "Статус", order: "Порядок",
+    premium: "Premium", cover: "URL обложки", translations: "Переводы", createModule: "Создать модуль",
+    createLesson: "Создать урок", publish: "Опубликовать", unpublish: "Вернуть в черновик",
+  },
+  settings: {
+    chooseLanguage: "Выберите язык", close: "Закрыть", appearance: "Оформление", theme: "Тема",
+    sound: "Звуки", allSounds: "Все звуки", volume: "Громкость", interfaceSounds: "Звуки интерфейса",
+    lessonSounds: "Звуки уроков", testSound: "Проверить звук", light: "Светлая", dark: "Тёмная", system: "Системная",
+  },
+};

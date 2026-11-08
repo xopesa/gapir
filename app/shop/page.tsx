@@ -1,5 +1,5 @@
-import { ShopScreen } from "@/src/features/shop/components/shop-screen";
+import { redirect } from "next/navigation";
 
 export default function ShopPage() {
-  return <ShopScreen />;
+  redirect("/");
 }

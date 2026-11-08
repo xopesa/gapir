@@ -1,0 +1,25 @@
+import { ru } from "./ru";
+
+export const zh: typeof ru = {
+  common: { save: "保存", cancel: "取消", continue: "继续", loading: "加载中…", draft: "草稿", published: "已发布", edit: "编辑", create: "创建", back: "返回", logout: "退出", language: "界面语言", error: "出现错误" },
+  nav: { learn: "学习", practice: "练习", aiAssistant: "AI 助手", profile: "个人资料", admin: "管理后台" },
+  aiAssistant: {
+    title: "AI 助手", subtitle: "与您的专属 AI 老师练习真实对话。", available: "可用", soon: "即将推出", mockAi: "Mock AI", back: "返回",
+    unavailableTitle: "AI 助手暂时不可用", unavailableText: "此功能已在应用设置中关闭，请稍后再试。", tutorDisabled: "AI Tutor 暂时关闭。",
+    features: { tutor: "AI Tutor", tutorText: "带纠正和提示的对话练习。", conversation: "自由对话", grammar: "语法检查", translation: "解释性翻译", vocabulary: "词汇", pronunciation: "发音", history: "历史", historyText: "返回以前的对话。" },
+    setup: { title: "新对话", subtitle: "选择方向、水平和主题。", direction: "学习方向", uzToZh: "我会乌兹别克语，正在学习中文", zhToUz: "我会中文，正在学习乌兹别克语", uzToZhText: "用乌兹别克语解释，用中文练习。", zhToUzText: "用中文解释，用乌兹别克语练习。", level: "水平", beginner: "初级", intermediate: "中级", advanced: "高级", topic: "主题", freeConversation: "自由对话", greeting: "认识朋友", shopping: "购物", restaurant: "餐厅", travel: "旅行", work: "工作", start: "开始对话", starting: "正在创建会话…" },
+    chat: { title: "AI Tutor", connection: "状态", restored: "对话已恢复", placeholder: "输入消息…", send: "发送", microphone: "录制语音", stopRecording: "停止录音", finish: "结束", finishTitle: "结束这次对话吗？", finishText: "会话将保存在历史记录中。", confirmFinish: "结束", cancel: "继续对话", play: "播放回答", pause: "暂停", empty: "开始对话，老师会在第一条消息后回复。", recordingTime: "录音", voiceUnavailable: "此浏览器不支持录音，文字模式仍可使用。", voiceDisabled: "语音输入暂时关闭。", tooLarge: "录音文件太大。", finished: "对话已结束", finishedText: "结果已保存到学习记忆。", messages: "条消息", xp: "XP", coins: "金币", returnHome: "返回 AI 助手" },
+    states: { ready: "准备就绪", listening: "正在聆听", recording: "正在录音", uploading: "正在上传", recognizing: "正在识别", thinking: "正在思考", speaking: "正在朗读", error: "错误", finished: "已结束" },
+    response: { recognized: "识别内容", corrected: "正确表达", translation: "翻译", explanation: "简要解释", teacher: "老师回复", nextQuestion: "下一个问题", newWords: "新词", pronunciation: "发音提示", score: "评分", language: "语言" },
+    history: { title: "对话历史", subtitle: "最近的 AI Tutor 会话。", empty: "历史记录为空。", emptyText: "开始第一次对话后，会话将显示在这里。", open: "打开", active: "进行中", finished: "已结束", lastMessage: "最后一条消息" },
+    memory: { title: "学习记忆", empty: "AI Tutor 第一次回复后会生成学习记忆。", level: "水平", streak: "连续天数", totalXp: "总 XP", coins: "金币", weakTopics: "薄弱主题", mistakes: "常见错误", recentTopics: "最近主题", learnedWords: "已学词汇" },
+    errors: { generic: "无法完成请求，请重试。", unauthorized: "登录会话已过期，请重新登录。", validation: "请检查所选参数。", featureDisabled: "AI Tutor 当前不可用。", provider: "AI 服务暂时不可用。", stt: "无法识别语音，请重试或输入文字。", invalidResponse: "回复不完整，请重新发送消息。", audioTooLarge: "录音文件太大。", audioTooLong: "录音超过允许时长。", audioUnsupported: "不支持此音频格式。", rateLimited: "请求过多，请稍后重试。", timeout: "等待回复超时，您可以重试。", sessionNotFound: "找不到会话或会话已结束。", forbidden: "您无权访问此会话。", microphoneDenied: "麦克风权限被拒绝，请在浏览器设置中允许。", microphoneFailed: "无法开始录音，文字模式仍可使用。" }
+  },
+  auth: { kicker: "每天学习乌兹别克语", promise: "从第一课开始自信开口。", promiseText: "短时学习、真实语言和清晰进度，没有繁重教材。", loginTitle: "登录 Gapir", loginSubtitle: "继续已保存的学习进度。", registerTitle: "创建账户", registerSubtitle: "今天就开始第一课。", name: "姓名", email: "邮箱", password: "密码", confirmPassword: "确认密码", login: "登录", register: "注册", noAccount: "还没有账户？", hasAccount: "已有账户？", forgot: "忘记密码？", forgotTitle: "找回密码", forgotText: "测试版本中，请联系管理员重置密码。", terms: "我同意使用条款", invalid: "邮箱或密码不正确" },
+  onboarding: { title: "设置你的课程", subtitle: "选择学习方向和每日节奏。", interfaceLanguage: "界面语言", targetLanguage: "学习语言", sourceLanguage: "讲解语言", dailyGoal: "每日目标", minutes: "分钟", start: "开始学习" },
+  learning: { greeting: "你好", subtitle: "再迈出一小步，新语言就更近了。", section: "学习路径", continue: "继续学习", empty: "暂无已发布课程。", progress: "课程进度", lesson: "课程", available: "可学习", inProgress: "进行中", completed: "已完成", locked: "未解锁", minutes: "分钟" },
+  profile: { title: "个人资料", level: "等级", currentStreak: "当前连续天数", longestStreak: "最佳连续天数", lessons: "已完成课程", totalXp: "总 XP", preferences: "学习设置", notifications: "提醒", timezone: "时区" },
+  lesson: { theory: "开始之前", start: "开始课程", check: "检查答案", next: "下一题", correct: "正确！", incorrect: "继续努力", finish: "完成课程", result: "课程完成", correctAnswers: "正确答案", earnedXp: "获得 XP", time: "用时", returnHome: "返回学习路径" },
+  admin: { title: "管理后台", dashboard: "概览", courses: "课程", users: "用户", newCourse: "创建课程", totalUsers: "用户", totalCourses: "全部课程", publishedCourses: "已发布", drafts: "草稿", modules: "模块", lessons: "课时", exercises: "练习", recent: "最近更新", source: "讲解语言", target: "学习语言", level: "等级", slug: "Slug", status: "状态", order: "顺序", premium: "高级", cover: "封面 URL", translations: "翻译", createModule: "创建模块", createLesson: "创建课时", publish: "发布", unpublish: "转为草稿" },
+  settings: { chooseLanguage: "选择语言", close: "关闭", appearance: "外观", theme: "主题", sound: "声音", allSounds: "所有声音", volume: "音量", interfaceSounds: "界面声音", lessonSounds: "课程声音", testSound: "测试声音", light: "浅色", dark: "深色", system: "跟随系统" },
+};

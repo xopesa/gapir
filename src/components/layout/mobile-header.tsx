@@ -3,18 +3,17 @@
 import { Bell } from "@phosphor-icons/react";
 import { useState } from "react";
 import { CurrencyBadge, IconButton, StreakBadge } from "@/src/components/ui";
-import { useUserStore } from "@/src/stores/user-store";
+import type { AppUser } from "@/src/types/app";
 import { Brand } from "./brand";
 
-export function MobileHeader() {
+export function MobileHeader({ user }: { user: AppUser }) {
   const [open, setOpen] = useState(false);
-  const { gapCoins, streak } = useUserStore();
   return (
     <header className="mobile-header">
       <Brand compact />
       <div className="mobile-stats">
-        <StreakBadge value={streak} />
-        <CurrencyBadge value={gapCoins} />
+        <StreakBadge value={user.streak} />
+        <CurrencyBadge value={user.xp} />
         <div className="notification-wrap">
           <IconButton
             aria-label="Уведомления"

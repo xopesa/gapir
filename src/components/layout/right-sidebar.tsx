@@ -3,17 +3,17 @@
 import { Fire, Lightning, Trophy } from "@phosphor-icons/react";
 import { Avatar, Badge, Card, ProgressBar } from "@/src/components/ui";
 import { formatNumber } from "@/src/lib/utils";
-import { useUserStore } from "@/src/stores/user-store";
+import type { AppDictionary, AppUser } from "@/src/types/app";
 
-export function RightSidebar() {
-  const { name, xp, streak } = useUserStore();
+export function RightSidebar({ user, dictionary }: { user: AppUser; dictionary: AppDictionary }) {
+  const { name, xp, streak } = user;
   return (
     <aside className="right-sidebar">
       <Card className="profile-mini">
         <Avatar initials="АЛ" />
         <div>
           <strong>{name}</strong>
-          <span>Уровень 7 · A1</span>
+          <span>{dictionary.profile.level} · A1</span>
         </div>
         <Badge tone="blue">A1</Badge>
       </Card>
@@ -24,8 +24,8 @@ export function RightSidebar() {
             <Fire weight="fill" />
           </span>
           <div>
-            <span>Текущая серия</span>
-            <strong>{streak} дней</strong>
+            <span>{dictionary.profile.currentStreak}</span>
+            <strong>{streak}</strong>
           </div>
         </div>
         <div className="week-row" aria-label="Активность за неделю">
@@ -43,8 +43,8 @@ export function RightSidebar() {
             <Lightning weight="fill" />
           </span>
           <div>
-            <span>Дневная цель</span>
-            <strong>35 / 50 XP</strong>
+            <span>{dictionary.onboarding.dailyGoal}</span>
+            <strong>{user.preference?.dailyGoalMinutes ?? 10} {dictionary.onboarding.minutes}</strong>
           </div>
         </div>
         <ProgressBar value={70} label="Дневная цель выполнена на 70%" />
@@ -63,7 +63,7 @@ export function RightSidebar() {
         <p>Ещё 180 XP до зоны повышения</p>
       </Card>
 
-      <p className="xp-total">Всего {formatNumber(xp)} XP</p>
+      <p className="xp-total">{dictionary.profile.totalXp}: {formatNumber(xp)}</p>
     </aside>
   );
 }
