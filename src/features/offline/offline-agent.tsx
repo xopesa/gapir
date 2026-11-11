@@ -1,22 +1,34 @@
 "use client";
 
 import { useEffect } from "react";
-import { audioManifest } from "@/src/content/audio-manifest.generated";
+import { narrationAudio, phraseAudio } from "@/src/content/audio-manifest.generated";
+import { narrationKey } from "@/src/lib/audio-keys";
 import { flushOfflineQueue, refreshOfflinePack } from "./offline-store";
 
 const CACHE = "gapir-offline-v1";
 const REFRESH_KEY = "gapir-offline-refreshed";
 const REFRESH_EVERY_MS = 10 * 60 * 1000;
 
+type Pack = NonNullable<Awaited<ReturnType<typeof refreshOfflinePack>>>;
+
+/** Audio of the learner's course: its words and the narrated theory of each lesson. */
+function packAudio(pack: Pack) {
+  const target = (pack.course as { targetLanguage?: string }).targetLanguage ?? "uz";
+  const narration = Object.values(pack.lessons as Record<string, { theory?: string }>)
+    .map((lesson) => (lesson.theory ? narrationAudio[narrationKey(lesson.theory)] : undefined))
+    .filter((url): url is string => Boolean(url));
+  return [...Object.values(phraseAudio[target] ?? {}), ...narration];
+}
+
 /** Stores the offline page with its scripts/styles and the lesson audio. */
-async function warmCache() {
+async function warmCache(pack: Pack) {
   if (!("caches" in window)) return;
   const cache = await caches.open(CACHE);
   const page = await fetch("/offline", { cache: "no-store" }).catch(() => null);
   if (!page?.ok) return;
   const html = await page.clone().text();
   await cache.put("/offline", page);
-  const assets = new Set<string>(["/gapir-logo.png", ...Object.values(audioManifest)]);
+  const assets = new Set<string>(["/gapir-logo.png", ...packAudio(pack)]);
   for (const match of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+)"/g)) assets.add(match[1]);
   await Promise.all([...assets].map(async (url) => {
     if (await cache.match(url)) return;
@@ -45,7 +57,7 @@ export function OfflineAgent() {
       const pack = await refreshOfflinePack();
       if (!pack) return; // signed out or no course yet
       try { window.localStorage.setItem(REFRESH_KEY, String(Date.now())); } catch { /* ignore */ }
-      await warmCache().catch(() => undefined);
+      await warmCache(pack).catch(() => undefined);
     };
     void sync();
     window.addEventListener("online", sync);

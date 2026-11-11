@@ -1,111 +1,152 @@
-// Generates Uzbek voice files for every phrase with a `speak` field in the
-// course content and writes src/content/audio-manifest.generated.ts.
+// Generates the course audio and writes src/content/audio-manifest.generated.ts:
+//  - phrases: every `speak`/`prompt` in the target language (Uzbek, Russian);
+//  - narration: each lesson's theory, read in Chinese and Uzbek. Words in
+//    other languages inside the text are read by that language's voice
+//    (e.g. Russian «а», «ма́ма» in a Chinese explanation).
 //
-//   npx tsx scripts/generate-audio.ts --dry-run          # list phrases only
-//   AUDIO_TTS_PROVIDER=yandex npx tsx scripts/generate-audio.ts
-//   AUDIO_TTS_PROVIDER=gemini npx tsx scripts/generate-audio.ts [--force]
-//   npx tsx scripts/generate-audio.ts --manifest-only     # files added by hand (e.g. from AI Studio)
+//   npx tsx scripts/generate-audio.ts --dry-run        # list what is missing
+//   npx tsx scripts/generate-audio.ts [--force]        # synthesise (needs: pip install edge-tts)
+//   npx tsx scripts/generate-audio.ts --manifest-only  # only rebuild the manifest
 //
-// Keys are read from .env and never printed:
-//   yandex: YANDEX_SPEECHKIT_API_KEY (+ optional YANDEX_FOLDER_ID, YANDEX_TTS_VOICE=nigora)
-//   gemini: GEMINI_API_KEY or AI_LLM_API_KEY (+ optional AUDIO_GEMINI_MODEL, AUDIO_GEMINI_VOICE)
-// Files go to public/audio/uz/ and are served as static assets (also on Cloudflare).
-import "dotenv/config";
+// Voices: Microsoft Edge neural TTS (no key). Existing files are kept unless
+// --force, so hand-made recordings (e.g. public/audio/uz/*.wav) stay.
+import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { zhUzCourse } from "../prisma/content/zh-uz-unit1";
-import { toNewUzbekLatin } from "../src/lib/uzbek-latin";
+import { zhRuCourse } from "../prisma/content/zh-ru-unit1";
+import { zhUzCourse, type CourseContent } from "../prisma/content/zh-uz-unit1";
+import { narrationKey, phraseKey } from "../src/lib/audio-keys";
 
-const OUT_DIR = resolve("public/audio/uz");
+const COURSES: CourseContent[] = [zhUzCourse, zhRuCourse];
+const NARRATION_LOCALES = ["zh", "uz"] as const;
+const PUBLIC = resolve("public");
 const MANIFEST = resolve("src/content/audio-manifest.generated.ts");
 const dryRun = process.argv.includes("--dry-run");
 const force = process.argv.includes("--force");
 const manifestOnly = process.argv.includes("--manifest-only");
-const provider = (process.env.AUDIO_TTS_PROVIDER ?? "yandex").toLowerCase();
 
-// Same normalisation as the player's lookup (src/features/learning/hooks/use-speech.ts).
-const key = (text: string) => toNewUzbekLatin(text).trim();
-// ASCII file names: ö→oe, ğ→gh, ş→sh, ç→ch (so "ö" and "o" never collide).
-const ASCII: Record<string, string> = { ö: "oe", ğ: "gh", ş: "sh", ç: "ch" };
-const slug = (text: string) => key(text).toLowerCase().replace(/[öğşç]/g, (letter) => ASCII[letter]).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x";
+const VOICES = { zh: "zh-CN-XiaoxiaoNeural", ru: "ru-RU-SvetlanaNeural", uz: "uz-UZ-MadinaNeural" } as const;
+type Voice = keyof typeof VOICES;
+interface Segment { voice: string; text: string; rate: string }
 
-function phrases() {
-  const set = new Set<string>();
-  for (const courseModule of zhUzCourse.modules) for (const lesson of courseModule.lessons) for (const exercise of lesson.exercises) {
-    if ("speak" in exercise && exercise.speak) set.add(key(exercise.speak));
+const HAN = /[\p{Script=Han}　-〿＀-￯]/u;
+const CYRILLIC = /\p{Script=Cyrillic}/u;
+const LATIN = /[\p{Script=Latin}ʼʻ]/u;
+
+// The Uzbek voice knows the old spelling: Ö→Oʻ, Ğ→Gʻ, Ş→Sh, Ç→Ch.
+const OLD: Record<string, string> = { Ö: "Oʻ", ö: "oʻ", Ğ: "Gʻ", ğ: "gʻ", Ş: "Sh", ş: "sh", Ç: "Ch", ç: "ch" };
+const forVoice = (voice: Voice, text: string) => {
+  const plain = text.normalize("NFD").replace(/́/g, "").normalize("NFC");
+  return voice === "uz" ? plain.replace(/[ÖöĞğŞşÇç]/g, (letter) => OLD[letter]) : plain;
+};
+
+const CYR: Record<string, string> = { а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh", з: "z", и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r", с: "s", т: "t", у: "u", ф: "f", х: "kh", ц: "ts", ч: "ch", ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "eh", ю: "yu", я: "ya" };
+const UZ: Record<string, string> = { ö: "oe", ğ: "gh", ş: "sh", ç: "ch" };
+const slug = (lang: string, text: string) => phraseKey(lang, text).toLowerCase()
+  .replace(/[а-яё]/g, (letter) => CYR[letter] ?? "").replace(/[öğşç]/g, (letter) => UZ[letter])
+  .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x";
+
+/** Splits a text into runs per script, each read by its own voice. */
+function segments(text: string, latinVoice: Voice): Segment[] {
+  const runs: Array<{ voice: Voice; text: string }> = [];
+  const cleaned = text.replace(/ʌ/g, "а").replace(/[[\]]/g, " ").replace(/\s*[—–]\s*/g, ", ");
+  for (const char of cleaned) {
+    const voice: Voice | null = HAN.test(char) ? "zh" : CYRILLIC.test(char) ? "ru" : LATIN.test(char) ? latinVoice : null;
+    const last = runs[runs.length - 1];
+    if (!last) runs.push({ voice: voice ?? latinVoice, text: char });
+    else if (voice === null || voice === last.voice) last.text += char;
+    else runs.push({ voice, text: char });
   }
-  return [...set];
+  return runs
+    .map((run) => ({ voice: run.voice, text: forVoice(run.voice, run.text).replace(/^[\s,，、.。:：;；]+/, "").trim() }))
+    .filter((run) => /[\p{L}\p{N}]/u.test(run.text.replace(/[ʼʻ]/g, "")))
+    .map((run) => ({ voice: VOICES[run.voice], text: run.text, rate: run.voice === "ru" ? "-15%" : "-5%" }));
 }
 
-async function yandex(text: string) {
-  const apiKey = process.env.YANDEX_SPEECHKIT_API_KEY;
-  if (!apiKey) throw new Error("Set YANDEX_SPEECHKIT_API_KEY in .env");
-  const body = new URLSearchParams({ text, lang: "uz-UZ", voice: process.env.YANDEX_TTS_VOICE ?? "nigora", format: "mp3", speed: "0.9" });
-  if (process.env.YANDEX_FOLDER_ID) body.set("folderId", process.env.YANDEX_FOLDER_ID);
-  const response = await fetch("https://tts.api.cloud.yandex.net/speech/v1/tts:synthesize", {
-    method: "POST", headers: { Authorization: `Api-Key ${apiKey}` }, body,
-  });
-  if (!response.ok) throw new Error(`Yandex SpeechKit HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`);
-  return { bytes: Buffer.from(await response.arrayBuffer()), ext: "mp3" };
-}
+interface Job { out: string; url: string; segments: Segment[] }
 
-function pcmToWav(pcm: Buffer, sampleRate = 24000) {
-  const header = Buffer.alloc(44);
-  header.write("RIFF", 0); header.writeUInt32LE(36 + pcm.length, 4); header.write("WAVE", 8);
-  header.write("fmt ", 12); header.writeUInt32LE(16, 16); header.writeUInt16LE(1, 20); header.writeUInt16LE(1, 22);
-  header.writeUInt32LE(sampleRate, 24); header.writeUInt32LE(sampleRate * 2, 28); header.writeUInt16LE(2, 32); header.writeUInt16LE(16, 34);
-  header.write("data", 36); header.writeUInt32LE(pcm.length, 40);
-  return Buffer.concat([header, pcm]);
-}
-
-async function gemini(text: string) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.AI_LLM_API_KEY;
-  if (!apiKey) throw new Error("Set GEMINI_API_KEY (or AI_LLM_API_KEY) in .env");
-  const model = process.env.AUDIO_GEMINI_MODEL ?? "gemini-2.5-flash-preview-tts";
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: `Say clearly and slowly, in Uzbek, for a language learner: ${text}` }] }],
-      generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: process.env.AUDIO_GEMINI_VOICE ?? "Kore" } } } },
-    }),
-  });
-  if (!response.ok) throw new Error(`Gemini TTS HTTP ${response.status}: ${(await response.text()).slice(0, 200)}`);
-  const json = await response.json() as { candidates?: Array<{ content?: { parts?: Array<{ inlineData?: { data?: string } }> } }> };
-  const data = json.candidates?.[0]?.content?.parts?.find((part) => part.inlineData?.data)?.inlineData?.data;
-  if (!data) throw new Error("Gemini TTS returned no audio");
-  return { bytes: pcmToWav(Buffer.from(data, "base64")), ext: "wav" };
-}
-
-function writeManifest() {
-  const files = existsSync(OUT_DIR) ? readdirSync(OUT_DIR) : [];
-  const entries = phrases()
-    .map((text) => {
-      const file = files.find((name) => name.replace(/\.(mp3|wav)$/, "") === slug(text));
-      return file ? `  ${JSON.stringify(text)}: ${JSON.stringify(`/audio/uz/${file}`)},` : null;
-    })
-    .filter(Boolean);
-  writeFileSync(MANIFEST, `// Generated by scripts/generate-audio.ts. Maps Uzbek text → audio file in /public.\nexport const audioManifest: Record<string, string> = {\n${entries.join("\n")}${entries.length ? "\n" : ""}};\n`);
-  console.log(`Manifest: ${entries.length} phrase(s) with audio`);
-}
-
-async function main() {
-  const list = phrases();
-  console.log(`${list.length} phrase(s): ${list.join(" · ")}`);
-  if (dryRun) return;
-  if (manifestOnly) { writeManifest(); return; }
-  const synthesize = provider === "gemini" ? gemini : provider === "yandex" ? yandex : null;
-  if (!synthesize) throw new Error(`Unknown AUDIO_TTS_PROVIDER "${provider}" (use yandex or gemini)`);
-  mkdirSync(OUT_DIR, { recursive: true });
-  const existing = readdirSync(OUT_DIR);
-  for (const text of list) {
-    const name = slug(text);
-    if (!force && existing.some((file) => file.replace(/\.(mp3|wav)$/, "") === name)) { console.log(`skip  ${text}`); continue; }
-    const { bytes, ext } = await synthesize(text);
-    writeFileSync(resolve(OUT_DIR, `${name}.${ext}`), bytes);
-    console.log(`saved ${text} → ${name}.${ext} (${bytes.length} bytes)`);
+function phraseJobs() {
+  const jobs = new Map<string, Job & { lang: string; key: string }>();
+  for (const course of COURSES) {
+    const lang = course.targetLanguage as Voice;
+    const isTarget = (text: string) => (lang === "ru" ? CYRILLIC.test(text) : LATIN.test(text) && !HAN.test(text));
+    for (const courseModule of course.modules) for (const lesson of courseModule.lessons) for (const exercise of lesson.exercises) {
+      for (const text of ["speak" in exercise ? exercise.speak : undefined, "prompt" in exercise ? exercise.prompt : undefined]) {
+        // Prompts with a blank ("Bu ___?") are not phrases to listen to.
+        if (!text || !isTarget(text) || text.includes("_")) continue;
+        const key = phraseKey(lang, text);
+        const name = slug(lang, text);
+        if (jobs.has(`${lang}|${key}`)) continue;
+        jobs.set(`${lang}|${key}`, { lang, key, out: resolve(PUBLIC, "audio", lang, `${name}.mp3`), url: `/audio/${lang}/${name}.mp3`, segments: [{ voice: VOICES[lang], text: forVoice(lang, text.replace(/^[—–-]\s*/, "")), rate: "-15%" }] });
+      }
+    }
   }
-  writeManifest();
+  return [...jobs.values()];
 }
 
-main().catch((error) => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });
+function narrationJobs() {
+  const jobs = new Map<string, Job & { key: string }>();
+  for (const course of COURSES) for (const courseModule of course.modules) for (const lesson of courseModule.lessons) {
+    for (const locale of NARRATION_LOCALES) {
+      const text = lesson.theory[locale];
+      if (!text) continue;
+      const key = narrationKey(text);
+      // Latin words are Uzbek in Uzbek texts and in the Uzbek course.
+      const latinVoice: Voice = locale === "uz" || course.targetLanguage === "uz" ? "uz" : "zh";
+      const parts = text.split("\n").flatMap((line) => segments(line, latinVoice));
+      // Neighbouring runs of one voice become one request.
+      const merged: Segment[] = [];
+      for (const part of parts) {
+        const last = merged[merged.length - 1];
+        if (last && last.voice === part.voice) last.text += `\n${part.text}`;
+        else merged.push({ ...part });
+      }
+      jobs.set(key, { key, out: resolve(PUBLIC, "audio", "narration", locale, `${key}.mp3`), url: `/audio/narration/${locale}/${key}.mp3`, segments: merged });
+    }
+  }
+  return [...jobs.values()];
+}
+
+function existing(path: string) {
+  const dir = resolve(path, "..");
+  const base = path.slice(dir.length + 1).replace(/\.mp3$/, "");
+  if (!existsSync(dir)) return null;
+  const file = readdirSync(dir).find((name) => name.replace(/\.(mp3|wav)$/, "") === base);
+  return file ? resolve(dir, file) : null;
+}
+
+function writeManifest(phrases: ReturnType<typeof phraseJobs>, narration: ReturnType<typeof narrationJobs>) {
+  const phraseMap: Record<string, Record<string, string>> = {};
+  for (const job of phrases) {
+    const file = existing(job.out);
+    if (!file) continue;
+    (phraseMap[job.lang] ??= {})[job.key] = `/audio/${job.lang}/${file.split(/[\\/]/).pop()}`;
+  }
+  const narrationMap: Record<string, string> = {};
+  for (const job of narration) if (existsSync(job.out)) narrationMap[job.key] = job.url;
+  writeFileSync(MANIFEST, [
+    "// Generated by scripts/generate-audio.ts — do not edit.",
+    "// phraseAudio: language → phraseKey(text) → file; narrationAudio: narrationKey(theory) → file.",
+    `export const phraseAudio: Record<string, Record<string, string>> = ${JSON.stringify(phraseMap, null, 2)};`,
+    `export const narrationAudio: Record<string, string> = ${JSON.stringify(narrationMap, null, 2)};`,
+    "",
+  ].join("\n"));
+  console.log(`Manifest: ${Object.values(phraseMap).reduce((sum, map) => sum + Object.keys(map).length, 0)} phrase(s), ${Object.keys(narrationMap).length} narration(s)`);
+}
+
+function main() {
+  const phrases = phraseJobs();
+  const narration = narrationJobs();
+  const todo = [...phrases, ...narration].filter((job) => force || !existing(job.out));
+  console.log(`${phrases.length} phrase(s), ${narration.length} narration(s); ${todo.length} to synthesise`);
+  if (dryRun) { for (const job of todo) console.log(`  ${job.url}: ${job.segments.map((s) => `[${s.voice.slice(0, 2)}] ${s.text.replace(/\n/g, " / ")}`).join(" ")}`); return; }
+  if (!manifestOnly && todo.length) {
+    const jobsFile = resolve(PUBLIC, "..", ".audio-jobs.json");
+    writeFileSync(jobsFile, JSON.stringify(todo.map(({ out, segments: parts }) => ({ out, segments: parts }))));
+    for (const job of todo) mkdirSync(resolve(job.out, ".."), { recursive: true });
+    execFileSync(process.env.PYTHON ?? "python", [resolve("scripts/edge-tts-batch.py"), jobsFile], { stdio: "inherit", env: { ...process.env, PYTHONIOENCODING: "utf-8" } });
+  }
+  writeManifest(phrases, narration);
+}
+
+main();

@@ -11,6 +11,8 @@ import { useSoundSettings } from "@/src/lib/sound/use-sound-settings";
 import type { SoundSettings } from "@/src/lib/sound/sound-types";
 import { applyTheme } from "@/src/lib/theme/theme-manager";
 import type { ThemePreference } from "@/src/lib/theme/theme-types";
+import { narrationAudio } from "@/src/content/audio-manifest.generated";
+import { narrationKey } from "@/src/lib/audio-keys";
 import { useSpeech } from "../hooks/use-speech";
 import { checkOffline, isLessonCompleted, offlineStore } from "@/src/features/offline/offline-store";
 
@@ -152,12 +154,42 @@ function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit, lang }: 
   </div>;
 }
 
-function PromptCard({ text, speakLabel, lang }: { text: string; speakLabel: string; lang: string }) {
-  const speech = useSpeech(text, lang);
+function PromptCard({ text, speak, speakLabel, lang }: { text: string; speak?: string; speakLabel: string; lang: string }) {
+  const speech = useSpeech(speak || text, lang);
+  // Like a teacher: the word is heard as soon as the exercise appears.
+  const { recorded, play } = speech;
+  useEffect(() => { if (recorded) play(); }, [recorded, play]);
   return <div className="duo-prompt" lang={lang}>
     {speech.available && <button type="button" className={`duo-speaker${speech.playing ? " is-playing" : ""}`} aria-label={speakLabel} onClick={() => speech.play()}><SpeakerHigh weight="fill" /></button>}
     <span className="duo-prompt-text">{text}</span>
   </div>;
+}
+
+/** The mascot reads the lesson's theory aloud (pre-recorded); starts by itself. */
+function Narration({ text, label }: { text: string; label: string }) {
+  const url = narrationAudio[narrationKey(text)];
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState(false);
+  useEffect(() => {
+    if (!url) return;
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.onplay = () => setPlaying(true);
+    audio.onpause = () => setPlaying(false);
+    audio.onended = () => setPlaying(false);
+    // Blocked without a tap on some browsers: then the button starts it.
+    void audio.play().catch(() => undefined);
+    return () => { audio.pause(); audioRef.current = null; };
+  }, [url]);
+  if (!url) return null;
+  const toggle = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) { if (audio.ended) audio.currentTime = 0; void audio.play().catch(() => undefined); } else audio.pause();
+  };
+  return <button type="button" className={`duo-narration${playing ? " is-playing" : ""}`} onClick={toggle} aria-pressed={playing}>
+    <SpeakerHigh weight="fill" /><span>{label}</span>
+  </button>;
 }
 
 // ─── Screens ────────────────────────────────────────────────────────────────
@@ -319,7 +351,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     return <main className="duo-lesson">
       <header className="duo-topbar"><ExitLink onExit={onExit} className="duo-icon-btn" label={t.quit}><X weight="bold" /></ExitLink><div className="duo-topbar-title">{lesson.title}</div><span className="duo-topbar-spacer" /></header>
       <div className="duo-body duo-intro">
-        <Bubble mascot="panda" size={104}><strong className="duo-intro-title">{lesson.title}</strong><span>{lesson.description}</span></Bubble>
+        <Bubble mascot="panda" size={104}><strong className="duo-intro-title">{lesson.title}</strong><span>{lesson.description}</span><Narration text={lesson.theory} label={t.listenTheory} /></Bubble>
         <ol className="duo-theory">{lines.map((line, index) => <motion.li key={index} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 0.06 * index }}>{line}</motion.li>)}</ol>
         <div className="duo-intro-meta"><span><Timer weight="bold" /> {lesson.estimatedMinutes} min</span><span><Lightning weight="fill" /> +{lesson.xpReward} XP</span><span><Target weight="bold" /> {total}</span></div>
       </div>
@@ -375,7 +407,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
           {reviewing && <p className="duo-review-tag"><ArrowCounterClockwise weight="bold" /> {t.reviewMistakes}</p>}
           <h1 className="duo-instruction">{exercise.instruction}</h1>
           <Bubble mascot={mascot} mood={feedback ? (feedback.isCorrect ? "happy" : "sad") : "idle"}>
-            {prompt && <PromptCard text={prompt} speakLabel={t.listen} lang={lang} />}
+            {prompt && <PromptCard key={exercise.id} text={prompt} speak={exercise.payload.speak} speakLabel={t.listen} lang={lang} />}
             <span className="duo-question">{exercise.question}</span>
           </Bubble>
           <div className="duo-control">

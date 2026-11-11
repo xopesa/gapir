@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { audioManifest } from "@/src/content/audio-manifest.generated";
-import { toNewUzbekLatin } from "@/src/lib/uzbek-latin";
-
-function normalizeKey(text: string) {
-  return toNewUzbekLatin(text).trim();
-}
+import { phraseAudio } from "@/src/content/audio-manifest.generated";
+import { phraseKey } from "@/src/lib/audio-keys";
 
 function findVoice(lang: string) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
@@ -18,7 +14,7 @@ function findVoice(lang: string) {
 // otherwise a system voice for the language if the device has one.
 // `available` is false when neither exists, so the UI can hide the button.
 export function useSpeech(text: string | undefined, lang = "uz") {
-  const url = text ? audioManifest[normalizeKey(text)] : undefined;
+  const url = text ? phraseAudio[lang]?.[phraseKey(lang, text)] : undefined;
   const [voice, setVoice] = useState<SpeechSynthesisVoice | null>(null);
   const [playing, setPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -59,5 +55,5 @@ export function useSpeech(text: string | undefined, lang = "uz") {
 
   useEffect(() => () => { audioRef.current?.pause(); }, []);
 
-  return { available: Boolean(text && (url || voice)), playing, play };
+  return { available: Boolean(text && (url || voice)), recorded: Boolean(url), playing, play };
 }

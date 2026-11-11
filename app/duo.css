@@ -262,3 +262,8 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 .offline-banner span { color: var(--muted, #64748b); }
 .offline-pending { display: inline-flex; align-items: center; gap: 6px; font-weight: 700; }
 .offline-banner-btn { padding: 8px 12px; border: 0; border-radius: 12px; background: var(--primary, #2563eb); color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
+
+/* Theory narration: the mascot reads the explanation aloud. */
+.duo-narration { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--color-primary); color: #fff; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 var(--color-primary-dark, #1846e8); align-self: flex-start; }
+.duo-narration svg { width: 20px; height: 20px; flex: 0 0 auto; }
+.duo-narration.is-playing svg { animation: duo-pulse .8s ease-in-out infinite; }
