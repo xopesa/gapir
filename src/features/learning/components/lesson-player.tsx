@@ -11,8 +11,8 @@ import { useSoundSettings } from "@/src/lib/sound/use-sound-settings";
 import type { SoundSettings } from "@/src/lib/sound/sound-types";
 import { applyTheme } from "@/src/lib/theme/theme-manager";
 import type { ThemePreference } from "@/src/lib/theme/theme-types";
-import { narrationAudio } from "@/src/content/audio-manifest.generated";
-import { narrationKey } from "@/src/lib/audio-keys";
+import { narrationAudio, phraseAudio } from "@/src/content/audio-manifest.generated";
+import { narrationKey, phraseKey } from "@/src/lib/audio-keys";
 import { useSpeech } from "../hooks/use-speech";
 import { checkOffline, isLessonCompleted, offlineStore } from "@/src/features/offline/offline-store";
 
@@ -156,13 +156,34 @@ function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit, lang }: 
 
 function PromptCard({ text, speak, speakLabel, lang }: { text: string; speak?: string; speakLabel: string; lang: string }) {
   const speech = useSpeech(speak || text, lang);
-  // Like a teacher: the word is heard as soon as the exercise appears.
-  const { recorded, play } = speech;
-  useEffect(() => { if (recorded) play(); }, [recorded, play]);
   return <div className="duo-prompt" lang={lang}>
     {speech.available && <button type="button" className={`duo-speaker${speech.playing ? " is-playing" : ""}`} aria-label={speakLabel} onClick={() => speech.play()}><SpeakerHigh weight="fill" /></button>}
     <span className="duo-prompt-text">{text}</span>
   </div>;
+}
+
+/**
+ * Like a teacher: when an exercise appears the mascot reads the question, then
+ * says the word to work with. Returns a function that replays the question.
+ */
+function useExerciseVoice(exerciseId: string, question: string, word: string | undefined, lang: string) {
+  const questionUrl = narrationAudio[narrationKey(question)];
+  const wordUrl = word ? phraseAudio[lang]?.[phraseKey(lang, word)] : undefined;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playList = useCallback((urls: string[]) => {
+    audioRef.current?.pause();
+    const [first, ...rest] = urls;
+    if (!first) return;
+    const audio = new Audio(first);
+    audioRef.current = audio;
+    audio.onended = () => { if (audioRef.current === audio) playList(rest); };
+    void audio.play().catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    playList([questionUrl, wordUrl].filter((url): url is string => Boolean(url)));
+    return () => { audioRef.current?.pause(); audioRef.current = null; };
+  }, [exerciseId, questionUrl, wordUrl, playList]);
+  return questionUrl ? () => playList([questionUrl]) : null;
 }
 
 /** The mascot reads the lesson's theory aloud (pre-recorded); starts by itself. */
@@ -346,6 +367,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
   const enter = reduced ? {} : { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.22 } };
 
   // Intro: the panda explains the lesson's theory line by line.
+  const playing = phase === "play" && exercise;
+  const replayQuestion = useExerciseVoice(playing ? `${exercise.id}-${queue.length}` : "", playing ? exercise.question : "", exercise?.payload.speak || exercise?.payload.prompt, lang);
+
   if (phase === "intro") {
     const lines = lesson.theory.split("\n").map((line) => line.trim()).filter(Boolean);
     return <main className="duo-lesson">
@@ -408,7 +432,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
           <h1 className="duo-instruction">{exercise.instruction}</h1>
           <Bubble mascot={mascot} mood={feedback ? (feedback.isCorrect ? "happy" : "sad") : "idle"}>
             {prompt && <PromptCard key={exercise.id} text={prompt} speak={exercise.payload.speak} speakLabel={t.listen} lang={lang} />}
-            <span className="duo-question">{exercise.question}</span>
+            {replayQuestion
+              ? <button type="button" className="duo-question duo-question-voice" onClick={replayQuestion} aria-label={t.listen}>{exercise.question} <SpeakerHigh weight="fill" /></button>
+              : <span className="duo-question">{exercise.question}</span>}
           </Bubble>
           <div className="duo-control">
             {exercise.type === "MULTIPLE_CHOICE" && <ChoiceControl exercise={exercise} answer={answer} locked={locked} onAnswer={setAnswer} />}

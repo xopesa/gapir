@@ -267,3 +267,7 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 .duo-narration { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--color-primary); color: #fff; font: inherit; font-weight: 700; cursor: pointer; box-shadow: 0 3px 0 var(--color-primary-dark, #1846e8); align-self: flex-start; }
 .duo-narration svg { width: 20px; height: 20px; flex: 0 0 auto; }
 .duo-narration.is-playing svg { animation: duo-pulse .8s ease-in-out infinite; }
+
+/* An exercise question with recorded audio: tap to hear it again. */
+.duo-question-voice { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
+.duo-question-voice svg { width: 1em; height: 1em; margin-left: 4px; vertical-align: -0.12em; color: var(--color-primary); }
