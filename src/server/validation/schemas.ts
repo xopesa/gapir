@@ -31,13 +31,13 @@ export const onboardingSchema = z
   .object({
     locale: z.enum(locales),
     sourceLanguage: z.enum(["ru", "en", "zh", "uz"]),
-    targetLanguage: z.enum(["uz", "zh"]),
+    targetLanguage: z.enum(["uz", "zh", "ru"]),
     dailyGoalMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20)]),
     timezone: z.string().min(1).default("Asia/Tashkent"),
   })
   .refine(
     (value) =>
-      ["ru:uz", "en:uz", "zh:uz", "uz:zh", "ru:zh", "en:zh"].includes(
+      ["ru:uz", "en:uz", "zh:uz", "uz:zh", "ru:zh", "en:zh", "zh:ru"].includes(
         `${value.sourceLanguage}:${value.targetLanguage}`,
       ),
     { message: "Это направление пока недоступно", path: ["sourceLanguage"] },
@@ -51,7 +51,7 @@ const translationSchema = z.object({
 
 export const createCourseSchema = z.object({
   sourceLanguage: z.enum(["ru", "en", "zh", "uz"]),
-  targetLanguage: z.enum(["uz", "zh"]),
+  targetLanguage: z.enum(["uz", "zh", "ru"]),
   level: z.string().trim().min(1).max(16),
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),

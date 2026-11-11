@@ -5,6 +5,7 @@ import { PrismaClient, type ExerciseType } from "../generated/prisma/client";
 import { hash } from "bcryptjs";
 import { seedCourseContent } from "./content/seed-course";
 import { zhUzCourse } from "./content/zh-uz-unit1";
+import { zhRuCourse } from "./content/zh-ru-unit1";
 
 // SEED_TARGET: "sqlite" (default, prisma/dev.db), "d1-local" (Wrangler's local D1
 // used by `npm run cf:preview`) or "d1-remote" (Cloudflare D1 over the HTTP API).
@@ -171,8 +172,10 @@ async function seedDemoCourse() {
 async function main() {
   await seedOwner();
   await seedDemoCourse();
-  const course = await seedCourseContent(prisma, zhUzCourse);
-  console.log(`Course ${course.slug}: ${zhUzCourse.modules.reduce((sum, item) => sum + item.lessons.length, 0)} lessons`);
+  for (const content of [zhUzCourse, zhRuCourse]) {
+    const course = await seedCourseContent(prisma, content);
+    console.log(`Course ${course.slug}: ${content.modules.reduce((sum, item) => sum + item.lessons.length, 0)} lessons`);
+  }
   console.log("Gapir seed completed");
 }
 

@@ -4,6 +4,7 @@
 //   npx tsx scripts/generate-audio.ts --dry-run          # list phrases only
 //   AUDIO_TTS_PROVIDER=yandex npx tsx scripts/generate-audio.ts
 //   AUDIO_TTS_PROVIDER=gemini npx tsx scripts/generate-audio.ts [--force]
+//   npx tsx scripts/generate-audio.ts --manifest-only     # files added by hand (e.g. from AI Studio)
 //
 // Keys are read from .env and never printed:
 //   yandex: YANDEX_SPEECHKIT_API_KEY (+ optional YANDEX_FOLDER_ID, YANDEX_TTS_VOICE=nigora)
@@ -13,16 +14,20 @@ import "dotenv/config";
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { zhUzCourse } from "../prisma/content/zh-uz-unit1";
+import { toNewUzbekLatin } from "../src/lib/uzbek-latin";
 
 const OUT_DIR = resolve("public/audio/uz");
 const MANIFEST = resolve("src/content/audio-manifest.generated.ts");
 const dryRun = process.argv.includes("--dry-run");
 const force = process.argv.includes("--force");
+const manifestOnly = process.argv.includes("--manifest-only");
 const provider = (process.env.AUDIO_TTS_PROVIDER ?? "yandex").toLowerCase();
 
 // Same normalisation as the player's lookup (src/features/learning/hooks/use-speech.ts).
-const key = (text: string) => text.normalize("NFC").replace(/[ʻ‘’`']/g, "ʻ").trim();
-const slug = (text: string) => key(text).toLowerCase().replace(/ʻ/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x";
+const key = (text: string) => toNewUzbekLatin(text).trim();
+// ASCII file names: ö→oe, ğ→gh, ş→sh, ç→ch (so "ö" and "o" never collide).
+const ASCII: Record<string, string> = { ö: "oe", ğ: "gh", ş: "sh", ç: "ch" };
+const slug = (text: string) => key(text).toLowerCase().replace(/[öğşç]/g, (letter) => ASCII[letter]).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "x";
 
 function phrases() {
   const set = new Set<string>();
@@ -88,6 +93,7 @@ async function main() {
   const list = phrases();
   console.log(`${list.length} phrase(s): ${list.join(" · ")}`);
   if (dryRun) return;
+  if (manifestOnly) { writeManifest(); return; }
   const synthesize = provider === "gemini" ? gemini : provider === "yandex" ? yandex : null;
   if (!synthesize) throw new Error(`Unknown AUDIO_TTS_PROVIDER "${provider}" (use yandex or gemini)`);
   mkdirSync(OUT_DIR, { recursive: true });

@@ -1,15 +1,18 @@
 import type { ExerciseType } from "@/generated/prisma/client";
+import { toNewUzbekLatin } from "@/src/lib/uzbek-latin";
 import { prisma } from "@/src/server/db";
 
 export type ExercisePayload = Record<string, unknown>;
 
-// Uzbek Latin writes oʻ/gʻ and the tutuq belgisi with several look-alike marks
-// (ʻ ‘ ’ ` ʼ '); learners on phones type whichever their keyboard has.
+// The tutuq belgisi (ʼ) is typed with several look-alike marks; old-alphabet
+// spellings (oʻ, gʻ, sh, ch) are folded into the new letters (ö, ğ, ş, ç).
 const APOSTROPHES = /[ʻʼ‘’`´']/g;
 
 export function normalizeText(value: unknown) {
-  return String(value ?? "")
-    .normalize("NFC")
+  // Russian: stress marks (а́) are teaching aids, never required in answers;
+  // ё may be typed as е. NFD→strip U+0301→NFC keeps й/ё/ö/ğ otherwise intact.
+  const text = String(value ?? "").normalize("NFD").replace(/́/g, "").normalize("NFC").replace(/ё/g, "е").replace(/Ё/g, "Е");
+  return toNewUzbekLatin(text)
     .replace(APOSTROPHES, "'")
     .replace(/[.!?,;:。！？，；：]+/g, " ")
     .trim()

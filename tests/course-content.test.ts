@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { zhRuCourse } from "@/prisma/content/zh-ru-unit1";
 import { zhUzCourse } from "@/prisma/content/zh-uz-unit1";
 import { checkExerciseAnswer, normalizeText, validateLessonForPublication } from "@/src/server/services/lesson-service";
 
-const lessons = zhUzCourse.modules.flatMap((module) => module.lessons);
+const lessons = [zhUzCourse, zhRuCourse].flatMap((course) => course.modules.flatMap((module) => module.lessons));
 
-describe("zh→uz course content", () => {
+describe("course content (zh→uz, zh→ru)", () => {
   it("has lessons that pass publication validation", () => {
     for (const lesson of lessons) {
       const errors = validateLessonForPublication({
@@ -29,6 +30,8 @@ describe("zh→uz course content", () => {
         const label = `${lesson.title.zh}: ${exercise.question.zh}`;
         expect(exercise.question.ru, label).toBeTruthy();
         expect(exercise.question.uz, label).toBeTruthy();
+        // Content is written in the new alphabet (explanations may cite the old spelling).
+        expect(JSON.stringify({ ...exercise, explanation: undefined }), label).not.toMatch(/[OoGg][ʻ‘]/);
         if (exercise.type === "MATCHING") {
           // Tap-to-pair tiles need unique labels on both sides.
           expect(new Set(exercise.pairs.map((pair) => pair.left)).size, label).toBe(exercise.pairs.length);
@@ -45,20 +48,30 @@ describe("zh→uz course content", () => {
         }
         if (exercise.type === "MULTIPLE_CHOICE") {
           expect(exercise.options.filter((option) => option.correct).length, label).toBe(1);
-          if (exercise.options.some((option) => option.image)) {
-            expect(exercise.options.every((option) => option.text.ru), label).toBe(true);
-          }
+          // Besides zh every option needs at least one more translation
+          // (meaning options deliberately omit the target language itself).
+          expect(exercise.options.every((option) => option.text.ru || option.text.uz), label).toBe(true);
         }
       }
     }
   });
 
-  it("accepts the apostrophe variants learners type for oʻ / gʻ", () => {
-    const accepted = { acceptedAnswers: ["Koʻrishguncha xayr"] };
-    for (const typed of ["Koʻrishguncha xayr", "Ko'rishguncha xayr!", "ko‘rishguncha  xayr.", "Ko’rishguncha xayr", "Ko`rishguncha xayr"]) {
+  it("accepts the new alphabet and every old spelling of ö / ğ / ş / ç", () => {
+    const accepted = { acceptedAnswers: ["Körişgunça xayr"] };
+    for (const typed of ["Körişgunça xayr", "Koʻrishguncha xayr", "Ko'rishguncha xayr!", "ko‘rishguncha  xayr.", "Ko’rishguncha xayr", "Ko`rishguncha xayr", "KÖRIŞGUNÇA XAYR"]) {
       expect(checkExerciseAnswer("TRANSLATE", accepted, typed), typed).toBe(true);
     }
     expect(normalizeText("Vaalaykum assalom!")).toBe("vaalaykum assalom");
     expect(checkExerciseAnswer("TRANSLATE", accepted, "Xayr")).toBe(false);
+    expect(normalizeText("Ğalaba, Şahar, Çoy")).toBe(normalizeText("Gʻalaba, Shahar, Choy"));
+    expect(normalizeText("maʼno")).toBe(normalizeText("ma'no"));
+  });
+
+  it("ignores Russian stress marks and treats ё as е", () => {
+    expect(normalizeText("Э́то ма́ма.")).toBe("это мама");
+    expect(normalizeText("ёж")).toBe("еж");
+    expect(normalizeText("Здравствуйте!")).toBe("здравствуйте");
+    expect(normalizeText("йод")).toBe("йод");
+    expect(checkExerciseAnswer("ARRANGE_WORDS", { correctWords: ["До", "свида́ния!"] }, ["До", "свида́ния!"])).toBe(true);
   });
 });

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { audioManifest } from "@/src/content/audio-manifest.generated";
+import { toNewUzbekLatin } from "@/src/lib/uzbek-latin";
 
 function normalizeKey(text: string) {
-  return text.normalize("NFC").replace(/[ʻ‘’`']/g, "ʻ").trim();
+  return toNewUzbekLatin(text).trim();
 }
 
 function findVoice(lang: string) {
@@ -45,7 +46,8 @@ export function useSpeech(text: string | undefined, lang = "uz") {
     }
     if (voice) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Stress marks (U+0301) are for the learner's eyes; voices may misread them.
+      const utterance = new SpeechSynthesisUtterance(text.normalize("NFD").replace(/́/g, "").normalize("NFC"));
       utterance.voice = voice;
       utterance.lang = voice.lang;
       utterance.rate = slow ? 0.6 : 0.9;

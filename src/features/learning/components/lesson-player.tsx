@@ -122,7 +122,10 @@ function MatchControl({ exercise, answer, locked, onAnswer }: { exercise: Exerci
   </div>;
 }
 
-function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit }: { answer: Answer; locked: boolean; onAnswer: (value: string) => void; placeholder: string; onSubmit: () => void }) {
+// Extra keys phone keyboards usually lack, per target language.
+const CHAR_KEYS: Record<string, string[]> = { uz: ["ö", "ğ", "ş", "ç", "ʼ"] };
+
+function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit, lang }: { answer: Answer; locked: boolean; onAnswer: (value: string) => void; placeholder: string; onSubmit: () => void; lang: string }) {
   const value = typeof answer === "string" ? answer : "";
   const fieldRef = useRef<HTMLTextAreaElement>(null);
   // Insert at the caret and keep focus so the phone keyboard stays open.
@@ -135,11 +138,11 @@ function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit }: { answ
   };
   return <div className="duo-type">
     <textarea ref={fieldRef} className="duo-textarea" value={value} disabled={locked} rows={3}
-      placeholder={placeholder} autoCapitalize="off" autoCorrect="off" spellCheck={false} lang="uz"
+      placeholder={placeholder} autoCapitalize="off" autoCorrect="off" spellCheck={false} lang={lang}
       onChange={(event) => onAnswer(event.target.value)}
       onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); onSubmit(); } }} />
-    {/* Phone keyboards rarely have ʻ (oʻ, gʻ) — offer it as a key. */}
-    <div className="duo-char-keys">{["ʻ", "oʻ", "gʻ", "sh", "ch"].map((char) => <button type="button" key={char} className="duo-char-key" disabled={locked} onPointerDown={(event) => event.preventDefault()} onClick={() => insert(char)}>{char}</button>)}</div>
+    {/* Phone keyboards rarely have the new Uzbek letters — offer them as keys. */}
+    <div className="duo-char-keys">{(CHAR_KEYS[lang] ?? []).map((char) => <button type="button" key={char} className="duo-char-key" disabled={locked} onPointerDown={(event) => event.preventDefault()} onClick={() => insert(char)}>{char}</button>)}</div>
   </div>;
 }
 
@@ -340,7 +343,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
             {exercise.type === "MULTIPLE_CHOICE" && <ChoiceControl exercise={exercise} answer={answer} locked={locked} onAnswer={setAnswer} />}
             {exercise.type === "ARRANGE_WORDS" && <ArrangeControl exercise={exercise} locked={locked} onAnswer={setAnswer} clearLabel={t.clear} />}
             {exercise.type === "MATCHING" && <MatchControl exercise={exercise} answer={answer} locked={locked} onAnswer={setAnswer} />}
-            {exercise.type === "TRANSLATE" && <TypeControl answer={answer} locked={locked} onAnswer={setAnswer} placeholder={t.typeHere} onSubmit={() => void check()} />}
+            {exercise.type === "TRANSLATE" && <TypeControl answer={answer} locked={locked} onAnswer={setAnswer} placeholder={t.typeHere} onSubmit={() => void check()} lang={lang} />}
           </div>
         </motion.section>
       </AnimatePresence>

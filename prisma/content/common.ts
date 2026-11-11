@@ -1,7 +1,8 @@
 // Shared types and helpers for course content files.
 // Texts: zh is required (primary explanation language for the zh→uz course);
 // missing locales fall back to the course source language at runtime.
-// Uzbek Latin uses ʻ (U+02BB) for oʻ/gʻ; answer checking accepts ' ‘ ’ ` as well.
+// Uzbek uses the new Latin alphabet (2026 law): Ö Ğ Ş Ç instead of Oʻ Gʻ Sh Ch;
+// the tutuq belgisi is ʼ (U+02BC). Answer checking also accepts the old spelling.
 
 export type ContentLocale = "zh" | "ru" | "uz" | "en";
 export type Text = Partial<Record<ContentLocale, string>> & { zh: string };
@@ -41,11 +42,11 @@ export const same = (value: string): Text => ({ zh: value, ru: value, uz: value,
 
 /** Standard exercise instructions. */
 export const I = {
-  choose: { zh: "选择正确答案", ru: "Выберите правильный ответ", uz: "Toʻgʻri javobni tanlang", en: "Choose the correct answer" },
-  meaning: { zh: "选择正确的意思", ru: "Выберите правильное значение", uz: "Toʻgʻri maʼnoni tanlang", en: "Choose the correct meaning" },
+  choose: { zh: "选择正确答案", ru: "Выберите правильный ответ", uz: "Töğri javobni tanlang", en: "Choose the correct answer" },
+  meaning: { zh: "选择正确的意思", ru: "Выберите правильное значение", uz: "Töğri maʼnoni tanlang", en: "Choose the correct meaning" },
   match: { zh: "点击配对", ru: "Соедините пары", uz: "Juftlarni toping", en: "Tap the matching pairs" },
-  build: { zh: "用单词组成句子", ru: "Составьте фразу из слов", uz: "Soʻzlardan gap tuzing", en: "Build the sentence" },
-  type: { zh: "用乌兹别克语输入", ru: "Напишите по-узбекски", uz: "Oʻzbekcha yozing", en: "Type in Uzbek" },
+  build: { zh: "用单词组成句子", ru: "Составьте фразу из слов", uz: "Sözlardan gap tuzing", en: "Build the sentence" },
+  type: { zh: "用乌兹别克语输入", ru: "Напишите по-узбекски", uz: "Özbekça yozing", en: "Type in Uzbek" },
   culture: { zh: "文化小知识", ru: "Культура", uz: "Madaniyat", en: "Culture" },
 } satisfies Record<string, Text>;
 
@@ -54,3 +55,6 @@ export const I = {
  * interface the option must not be the Uzbek word itself, so it falls back to zh.
  */
 export const word = (zh: string, ru: string, image?: string, correct = false) => ({ text: { zh, ru }, image, correct });
+
+/** Word-meaning option for a Russian-target course: zh/uz only, so the Russian interface falls back to zh. */
+export const meaning = (zh: string, uz: string, image?: string, correct = false) => ({ text: { zh, uz }, image, correct });
