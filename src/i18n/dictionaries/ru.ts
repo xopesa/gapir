@@ -47,7 +47,7 @@ export const ru = {
   lesson: {
     theory: "Перед началом", start: "Начать урок", check: "Проверить ответ", next: "Следующее задание",
     correct: "Верно!", incorrect: "Попробуем дальше", finish: "Завершить урок", result: "Урок завершён",
-    correctAnswers: "Правильных ответов", earnedXp: "Получено XP", time: "Время", returnHome: "К маршруту",
+    correctAnswers: "Правильных ответов", earnedXp: "Получено XP", time: "Время", returnHome: "К маршруту", quit: "Выйти", solution: "Правильный ответ:", continue: "Продолжить", typeHere: "Введите ответ…", listen: "Прослушать", clear: "Очистить", outOfHearts: "Сердечки закончились", outOfHeartsText: "Не страшно! Повторим урок ещё раз.", retry: "Попробовать снова", reviewMistakes: "Повторим ошибки", perfect: "Идеально!", accuracy: "Точность", tip: "Подсказка", unit: "Юнит", praise1: "Отлично!", praise2: "Верно!", praise3: "Так держать!",
   },
   admin: {
     title: "Админ-панель", dashboard: "Обзор", courses: "Курсы", users: "Пользователи",

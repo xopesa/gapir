@@ -1,8 +1,5 @@
 import { prisma } from "@/src/server/db";
-
-function localized<T extends { locale: string }>(items: T[], locale: string) {
-  return items.find((item) => item.locale === locale) ?? items.find((item) => item.locale === "ru") ?? items[0];
-}
+import { localized as localizedWithFallback } from "./lesson-service";
 
 export async function getLearningDashboard(userId: string, locale: string) {
   const user = await prisma.user.findUniqueOrThrow({
@@ -35,11 +32,14 @@ export async function getLearningDashboard(userId: string, locale: string) {
   });
   if (!course) return { user, course: null, modules: [], progressPercent: 0 };
 
+  // Content falls back to the course explanation language (zh for the zh→uz course).
+  const localized = <T extends { locale: string }>(items: T[], requested: string) => localizedWithFallback(items, requested, course.sourceLanguage);
   const progressByLesson = new Map(user.lessonProgress.map((item) => [item.lessonId, item]));
   let previousCompleted = true;
   const modules = course.modules.map((module) => ({
     id: module.id,
     title: localized(module.translations, locale)?.title ?? "",
+    description: localized(module.translations, locale)?.description ?? "",
     lessons: module.lessons.map((lesson) => {
       const progress = progressByLesson.get(lesson.id);
       const status: "completed" | "in_progress" | "available" | "locked" = progress?.status === "COMPLETED"
@@ -56,6 +56,7 @@ export async function getLearningDashboard(userId: string, locale: string) {
         title: translation?.title ?? "",
         description: translation?.description ?? "",
         status,
+        type: lesson.type,
         xpReward: lesson.xpReward,
         estimatedMinutes: lesson.estimatedMinutes,
       };

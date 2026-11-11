@@ -1,0 +1,40 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "gapir",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference required by OpenNext; must match "name" above.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "gapir"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "gapir-db",
+      // Replace with the id printed by `npx wrangler d1 create gapir-db`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Generated from prisma/migrations by `npm run cf:migrations`.
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    "SESSION_TTL_DAYS": "30",
+    "ENABLE_AI_ASSISTANT": "true",
+    "ENABLE_AI_TUTOR": "true",
+    "ENABLE_AI_VOICE_INPUT": "false",
+    "AI_STT_PROVIDER": "mock",
+    "AI_LLM_PROVIDER": "mock",
+    "AI_TTS_PROVIDER": "mock"
+  },
+  "observability": {
+    "enabled": true
+  }
+}

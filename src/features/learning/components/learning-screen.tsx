@@ -1,27 +1,86 @@
 "use client";
 
-import { Bell, BookOpen, Check, ChatCircleDots, LockKey, Play, Sparkle } from "@phosphor-icons/react";
+import { BookOpen, ChatsCircle, Check, LockKey, Star, TextAa } from "@phosphor-icons/react";
+import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { useState } from "react";
-import { Avatar, Badge, Card, IconButton, ProgressBar, SectionHeader, StreakBadge, XpBadge } from "@/src/components/ui";
+import { Mascot, type MascotKind } from "@/src/components/mascots/mascot";
 import type { AppDictionary, AppUser } from "@/src/types/app";
+
+type LessonStatus = "available" | "in_progress" | "completed" | "locked";
+type LessonType = "VOCABULARY" | "GRAMMAR" | "CONVERSATION";
 
 export interface LearningDashboardView {
   course: { title: string; description: string; level: string } | null;
-  modules: Array<{ id: string; title: string; lessons: Array<{ id: string; title: string; description: string; status: "available" | "in_progress" | "completed" | "locked"; xpReward: number; estimatedMinutes: number }> }>;
+  modules: Array<{ id: string; title: string; description?: string; lessons: Array<{ id: string; title: string; description: string; status: LessonStatus; type?: LessonType; xpReward: number; estimatedMinutes: number }> }>;
   progressPercent: number;
 }
 
+// Horizontal offsets (px) that make the path zig-zag like a trail.
+const PATH_OFFSETS = [0, 52, 78, 52, 0, -52, -78, -52];
+const UNIT_MASCOTS: MascotKind[] = ["panda", "dragon", "tiger"];
+const UNIT_TONES = ["tone-blue", "tone-mint", "tone-amber"];
+
+function NodeIcon({ status, type }: { status: LessonStatus; type?: LessonType }) {
+  if (status === "completed") return <Check weight="bold" />;
+  if (status === "locked") return <LockKey weight="fill" />;
+  if (type === "CONVERSATION") return <ChatsCircle weight="fill" />;
+  if (type === "GRAMMAR") return <TextAa weight="bold" />;
+  if (type === "VOCABULARY") return <BookOpen weight="fill" />;
+  return <Star weight="fill" />;
+}
+
 export function LearningScreen({ user, dictionary, dashboard }: { user: AppUser; dictionary: AppDictionary; dashboard: LearningDashboardView }) {
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const reduced = useReducedMotion();
   const lessons = dashboard.modules.flatMap((module) => module.lessons);
-  const nextLesson = lessons.find((lesson) => lesson.status === "in_progress") ?? lessons.find((lesson) => lesson.status === "available");
-  const initials = user.name.split(/\s+/).map((part) => part[0]).join("").slice(0, 2).toUpperCase();
-  return <div className="page-stack">
-    <header className="page-header"><div><p className="eyebrow">{dashboard.course?.title ?? "Gapir"}</p><h1>{dictionary.learning.greeting}, {user.name}!</h1><p>{dictionary.learning.subtitle}</p></div><div className="header-account"><div className="desktop-header-stats"><StreakBadge value={user.streak} /><XpBadge value={user.xp} /></div><div className="notification-wrap"><IconButton aria-label="Notifications" aria-expanded={notificationsOpen} onClick={() => setNotificationsOpen((value) => !value)}><Bell weight="bold" /></IconButton>{notificationsOpen && <div className="notification-popover"><strong>{dictionary.learning.continue}</strong><p>{nextLesson?.title ?? dictionary.learning.empty}</p></div>}</div><Avatar initials={initials} /></div></header>
+  const current = lessons.find((lesson) => lesson.status === "in_progress") ?? lessons.find((lesson) => lesson.status === "available");
 
-    <Card className="learning-hero" tone="ice"><div className="hero-copy"><span className="hero-label"><Sparkle weight="fill" /> {dashboard.course?.level ?? "A1"}</span><h2>{nextLesson ? dictionary.learning.continue : lessons.length ? dictionary.learning.completed : dictionary.learning.empty}</h2><p>{nextLesson ? `${nextLesson.title} · ${nextLesson.estimatedMinutes} ${dictionary.learning.minutes}` : dashboard.course?.description}</p>{nextLesson && <Link className="button button-primary button-lg" href={`/learn/${nextLesson.id}`}><Play weight="fill" /> {dictionary.common.continue}</Link>}<div className="hero-progress"><div><span>{dictionary.learning.progress}</span><strong>{dashboard.progressPercent}%</strong></div><ProgressBar value={dashboard.progressPercent} label={`${dictionary.learning.progress} ${dashboard.progressPercent}%`} /></div></div><div className="hero-art" aria-hidden="true"><div className="orb orb-one" /><div className="orb orb-two" /><div className="hero-art-card art-main"><BookOpen weight="duotone" /><span>Salom</span></div><div className="hero-art-card art-chat"><ChatCircleDots weight="fill" /><span>Assalomu alaykum</span></div></div></Card>
+  if (!dashboard.modules.length) {
+    return <div className="duo-path-page"><div className="duo-empty"><Mascot kind="panda" mood="idle" size={120} /><h2>{dictionary.learning.empty}</h2><p>{dictionary.learning.subtitle}</p></div></div>;
+  }
 
-    {dashboard.modules.length ? dashboard.modules.map((module) => <section key={module.id}><SectionHeader eyebrow={dictionary.learning.section} title={module.title} action={<span className="section-progress">{module.lessons.filter((lesson) => lesson.status === "completed").length} / {module.lessons.length}</span>} /><div className="lesson-track">{module.lessons.map((lesson, index) => { const enabled = lesson.status !== "locked"; const icon = lesson.status === "completed" ? <Check weight="bold" /> : enabled ? <Play weight="fill" /> : <LockKey weight="bold" />; const content = <><span className="lesson-orb">{icon}</span><Card className="lesson-copy" interactive={enabled}><div><span className="lesson-kicker">{dictionary.learning.lesson} {index + 1}</span><h3>{lesson.title}</h3><p>{lesson.description}</p></div><Badge tone={lesson.status === "completed" ? "mint" : "blue"}>+{lesson.xpReward} XP</Badge></Card></>; return enabled ? <Link href={`/learn/${lesson.id}`} className={`lesson-node lesson-${lesson.status === "in_progress" ? "active" : lesson.status}`} key={lesson.id}>{content}</Link> : <article className="lesson-node lesson-locked" key={lesson.id}>{content}</article>; })}</div></section>) : <Card className="empty-state" tone="ice"><BookOpen weight="duotone" /><h3>{dictionary.learning.empty}</h3><p>{dictionary.learning.subtitle}</p></Card>}
+  return <div className="duo-path-page">
+    <header className="duo-course-head">
+      <div>
+        <p className="eyebrow">{dashboard.course?.level ?? "A1"} · {dictionary.learning.progress} {dashboard.progressPercent}%</p>
+        <h1>{dashboard.course?.title ?? "Gapir"}</h1>
+      </div>
+      <span className="duo-course-greet">{dictionary.learning.greeting}, {user.name.split(/\s+/)[0]}!</span>
+    </header>
+
+    {dashboard.modules.map((module, moduleIndex) => {
+      const done = module.lessons.filter((lesson) => lesson.status === "completed").length;
+      const unitMascot = UNIT_MASCOTS[moduleIndex % UNIT_MASCOTS.length];
+      return <section key={module.id} className="duo-unit">
+        <div className={`duo-unit-banner ${UNIT_TONES[moduleIndex % UNIT_TONES.length]}`}>
+          <div>
+            <span className="duo-unit-kicker">{dictionary.lesson.unit} {moduleIndex + 1} · {done}/{module.lessons.length}</span>
+            <h2>{module.title.replace(/^[^·]*·\s*/, "")}</h2>
+            {module.description && <p>{module.description}</p>}
+          </div>
+          {current && module.lessons.some((lesson) => lesson.id === current.id) && <Link href={`/learn/${current.id}`} className="duo-unit-cta" aria-label={dictionary.learning.continue}><BookOpen weight="fill" /></Link>}
+        </div>
+
+        <ol className="duo-path">
+          {module.lessons.map((lesson, index) => {
+            const offset = PATH_OFFSETS[index % PATH_OFFSETS.length];
+            const isCurrent = current?.id === lesson.id;
+            const node = <>
+              {isCurrent && <motion.span className="duo-start-tag" animate={reduced ? undefined : { y: [0, -5, 0] }} transition={{ duration: 1.6, repeat: Infinity }}>{lesson.status === "in_progress" ? dictionary.common.continue : dictionary.lesson.start}</motion.span>}
+              <span className={`duo-node-btn status-${lesson.status}${isCurrent ? " is-current" : ""}`}><NodeIcon status={lesson.status} type={lesson.type} /></span>
+              <span className="duo-node-label">{lesson.title}</span>
+            </>;
+            // A mascot sits beside the path, on the side opposite to the bend.
+            const showMascot = index === 2 || (index > 2 && index % 5 === 2);
+            return <li key={lesson.id} className="duo-path-item" style={{ "--offset": `${offset}px` } as React.CSSProperties}>
+              {lesson.status === "locked"
+                ? <div className="duo-node" aria-disabled="true" title={dictionary.learning.locked}>{node}</div>
+                : <Link href={`/learn/${lesson.id}`} className="duo-node">{node}</Link>}
+              {showMascot && <Mascot kind={UNIT_MASCOTS[(moduleIndex + Math.floor(index / 5) + 1) % 3]} mood="idle" size={92} className={`duo-path-mascot ${offset >= 0 ? "on-left" : "on-right"}`} />}
+            </li>;
+          })}
+        </ol>
+        {moduleIndex === dashboard.modules.length - 1 && <div className="duo-path-end"><Mascot kind={unitMascot} mood={done === module.lessons.length ? "cheer" : "idle"} size={84} /></div>}
+      </section>;
+    })}
   </div>;
 }

@@ -312,21 +312,30 @@ export class ConversationEngine {
       .slice(0, 30);
     const summary = buildMemorySummary({ level: session.level, weakTopics, frequentMistakes, recentTopics, learnedWords });
 
-    await prisma.$transaction(async (tx) => {
-      await Promise.all([
-        tx.aiAssistantMessage.update({ where: { id: userMessage.id }, data: { recognizedText, responseJson: JSON.stringify(result) } }),
-        tx.aiAssistantMessage.create({
+    // Batch form only: Cloudflare D1 rejects interactive transactions.
+    const learnedWordWrites = result.newWords.flatMap((word) => {
+      const normalizedWord = word.word.normalize("NFKC").trim().toLocaleLowerCase();
+      if (!normalizedWord) return [];
+      return [prisma.aiLearnedWord.upsert({
+        where: { memoryId_language_normalizedWord: { memoryId: memory.memory.id, language: word.language, normalizedWord } },
+        update: { word: word.word, translation: word.translation, timesSeen: { increment: 1 }, lastSeenAt: now },
+        create: { memoryId: memory.memory.id, word: word.word, normalizedWord, translation: word.translation, language: word.language },
+      })];
+    });
+    await prisma.$transaction([
+        prisma.aiAssistantMessage.update({ where: { id: userMessage.id }, data: { recognizedText, responseJson: JSON.stringify(result) } }),
+        prisma.aiAssistantMessage.create({
           data: {
             sessionId, role: "ASSISTANT", correctedText: result.correctedText, translation: result.translation,
             grammarExplanation: result.grammarExplanation, teacherReply: result.teacherReply, nextQuestion: result.nextQuestion,
             score: result.score, xp: result.xp, coins: result.coins, audioUrl: result.audioUrl, responseJson: JSON.stringify(result),
           },
         }),
-        tx.user.update({
+        prisma.user.update({
           where: { id: userId },
           data: { xp: { increment: result.xp }, streak: streak.streak, longestStreak: streak.longestStreak, lastActivityDate: now },
         }),
-        tx.aiTutorMemory.update({
+        prisma.aiTutorMemory.update({
           where: { id: memory.memory.id },
           data: {
             level: session.level,
@@ -339,17 +348,8 @@ export class ConversationEngine {
             lastLessonAt: now,
           },
         }),
-      ]);
-      for (const word of result.newWords) {
-        const normalizedWord = word.word.normalize("NFKC").trim().toLocaleLowerCase();
-        if (!normalizedWord) continue;
-        await tx.aiLearnedWord.upsert({
-          where: { memoryId_language_normalizedWord: { memoryId: memory.memory.id, language: word.language, normalizedWord } },
-          update: { word: word.word, translation: word.translation, timesSeen: { increment: 1 }, lastSeenAt: now },
-          create: { memoryId: memory.memory.id, word: word.word, normalizedWord, translation: word.translation, language: word.language },
-        });
-      }
-    });
+        ...learnedWordWrites,
+    ]);
     return result;
   }
 

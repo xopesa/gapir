@@ -3,8 +3,35 @@ import { prisma } from "@/src/server/db";
 
 export type ExercisePayload = Record<string, unknown>;
 
+// Uzbek Latin writes oʻ/gʻ and the tutuq belgisi with several look-alike marks
+// (ʻ ‘ ’ ` ʼ '); learners on phones type whichever their keyboard has.
+const APOSTROPHES = /[ʻʼ‘’`´']/g;
+
 export function normalizeText(value: unknown) {
-  return String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+  return String(value ?? "")
+    .normalize("NFC")
+    .replace(APOSTROPHES, "'")
+    .replace(/[.!?,;:。！？，；：]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleLowerCase();
+}
+
+// Display-only payload fields that are safe to send to the browser (no answers).
+const DISPLAY_FIELDS = ["prompt", "speak", "mascot", "optionImages", "image"] as const;
+
+export function exerciseSolution(
+  type: ExerciseType,
+  payload: ExercisePayload,
+  correctOptionText?: string,
+) {
+  if (type === "MULTIPLE_CHOICE") return correctOptionText ?? "";
+  if (type === "TRANSLATE") return Array.isArray(payload.acceptedAnswers) ? String(payload.acceptedAnswers[0] ?? "") : "";
+  if (type === "ARRANGE_WORDS") return Array.isArray(payload.correctWords) ? payload.correctWords.join(" ") : "";
+  if (type === "MATCHING" && Array.isArray(payload.pairs)) {
+    return payload.pairs.map((pair) => `${(pair as { left: string }).left} — ${(pair as { right: string }).right}`).join(" · ");
+  }
+  return "";
 }
 
 function parsePayload(payload: string): ExercisePayload {
@@ -62,8 +89,23 @@ export function validateLessonForPublication(input: {
   return errors;
 }
 
-function localized<T extends { locale: string }>(items: T[], locale: string) {
-  return items.find((item) => item.locale === locale) ?? items.find((item) => item.locale === "ru") ?? items[0];
+export function localized<T extends { locale: string }>(items: T[], locale: string, fallback = "ru") {
+  return items.find((item) => item.locale === locale)
+    ?? items.find((item) => item.locale === fallback)
+    ?? items.find((item) => item.locale === "ru")
+    ?? items[0];
+}
+
+function shuffled<T>(values: T[], seed: string) {
+  // Deterministic per exercise so server and client render the same order.
+  let state = [...seed].reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 7);
+  const result = [...values];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    state = (state * 1664525 + 1013904223) >>> 0;
+    const swap = state % (index + 1);
+    [result[index], result[swap]] = [result[swap], result[index]];
+  }
+  return result;
 }
 
 export async function getPublishedLesson(userId: string, lessonId: string, locale: string) {
@@ -86,7 +128,9 @@ export async function getPublishedLesson(userId: string, lessonId: string, local
   if (!lesson) return null;
   const preference = await prisma.userPreference.findUnique({ where: { userId } });
   if (preference && (preference.sourceLanguage !== lesson.module.course.sourceLanguage || preference.targetLanguage !== lesson.module.course.targetLanguage)) return null;
-  const translation = localized(lesson.translations, locale);
+  // Content falls back to the course's explanation language (e.g. zh for zh→uz).
+  const fallback = lesson.module.course.sourceLanguage;
+  const translation = localized(lesson.translations, locale, fallback);
   return {
     id: lesson.id,
     title: translation?.title ?? "",
@@ -94,15 +138,24 @@ export async function getPublishedLesson(userId: string, lessonId: string, local
     theory: translation?.theory ?? "",
     xpReward: lesson.xpReward,
     estimatedMinutes: lesson.estimatedMinutes,
+    targetLanguage: lesson.module.course.targetLanguage,
     exercises: lesson.exercises.map((exercise) => {
       const payload = parsePayload(exercise.payload);
-      const text = localized(exercise.translations, locale);
+      const text = localized(exercise.translations, locale, fallback);
       const safePayload: ExercisePayload = {};
+      for (const field of DISPLAY_FIELDS) if (payload[field] !== undefined) safePayload[field] = payload[field];
       if (exercise.type === "ARRANGE_WORDS") safePayload.words = Array.isArray(payload.words) ? payload.words : [];
       if (exercise.type === "MATCHING" && Array.isArray(payload.pairs)) {
         safePayload.left = payload.pairs.map((pair) => (pair as { left: string }).left);
-        safePayload.right = payload.pairs.map((pair) => (pair as { right: string }).right).reverse();
+        safePayload.right = shuffled(payload.pairs.map((pair) => (pair as { right: string }).right), exercise.id);
       }
+      // Shuffle choices (with their images) so the right answer isn't always first.
+      const images = Array.isArray(payload.optionImages) ? payload.optionImages : null;
+      const options = shuffled(exercise.options.map((option, index) => ({
+        option: { id: option.id, text: localized(option.translations, locale, fallback)?.text ?? "" },
+        image: images?.[index] ?? null,
+      })), exercise.id);
+      if (images) safePayload.optionImages = options.map((item) => item.image);
       return {
         id: exercise.id,
         type: exercise.type,
@@ -110,7 +163,7 @@ export async function getPublishedLesson(userId: string, lessonId: string, local
         question: text?.question ?? "",
         xpReward: exercise.xpReward,
         payload: safePayload,
-        options: exercise.options.map((option) => ({ id: option.id, text: localized(option.translations, locale)?.text ?? "" })),
+        options: options.map((item) => item.option),
       };
     }),
   };

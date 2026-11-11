@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 import type { TutorDirection } from "../languages/registry";
 import type { TutorLevel, TutorTopic } from "../schemas/requests";
+import { tutorPromptTemplates } from "./templates.generated";
 
 export type PromptContext = {
   direction: TutorDirection;
@@ -27,8 +28,19 @@ function escapePromptValue(value: unknown) {
   return JSON.stringify(value).replace(/<\/(user_context|conversation_history)>/gi, "");
 }
 
+async function loadTutorTemplate(direction: TutorDirection, root?: string) {
+  // Prompts are embedded at build time (scripts/build-prompts.mjs) because
+  // Cloudflare Workers have no access to project files. A custom root reads from disk.
+  if (!root) {
+    const embedded = tutorPromptTemplates[direction];
+    if (embedded === undefined) throw new Error("PROMPT_NOT_FOUND");
+    return embedded;
+  }
+  return readFile(selectTutorPromptPath(direction, root), "utf8");
+}
+
 export async function compileTutorPrompt(context: PromptContext, root?: string) {
-  const template = await readFile(selectTutorPromptPath(context.direction, root), "utf8");
+  const template = await loadTutorTemplate(context.direction, root);
   const history = context.history.slice(-8);
   const systemPrompt = template
     .replaceAll("{{NATIVE_LANGUAGE}}", context.nativeLanguage)

@@ -1,5 +1,5 @@
 import { prisma } from "@/src/server/db";
-import { checkExerciseAnswer } from "./lesson-service";
+import { checkExerciseAnswer, exerciseSolution, localized } from "./lesson-service";
 
 export function calendarDateInTimezone(date: Date, timezone: string) {
   return new Intl.DateTimeFormat("en-CA", {
@@ -23,9 +23,11 @@ export function lessonXpGrant(status: "AVAILABLE" | "IN_PROGRESS" | "COMPLETED",
 export async function startLesson(userId: string, lessonId: string) {
   const lesson = await prisma.lesson.findFirst({ where: { id: lessonId, status: "PUBLISHED", module: { status: "PUBLISHED", course: { status: "PUBLISHED" } } } });
   if (!lesson) throw new Error("LESSON_NOT_FOUND");
+  // Replaying a lesson must not reset COMPLETED back to IN_PROGRESS: that made
+  // completeLesson grant the XP reward again on every replay.
   return prisma.userLessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
-    update: { startedAt: new Date(), status: "IN_PROGRESS" },
+    update: { startedAt: new Date() },
     create: { userId, lessonId, startedAt: new Date(), status: "IN_PROGRESS" },
   });
 }
@@ -33,7 +35,11 @@ export async function startLesson(userId: string, lessonId: string) {
 export async function submitExerciseAnswer(userId: string, exerciseId: string, answer: unknown, locale = "ru") {
   const exercise = await prisma.exercise.findFirst({
     where: { id: exerciseId, status: "PUBLISHED", lesson: { status: "PUBLISHED" } },
-    include: { options: true, translations: true },
+    include: {
+      options: { include: { translations: true } },
+      translations: true,
+      lesson: { select: { module: { select: { course: { select: { sourceLanguage: true } } } } } },
+    },
   });
   if (!exercise) throw new Error("EXERCISE_NOT_FOUND");
   const progress = await prisma.userLessonProgress.findUnique({ where: { userId_lessonId: { userId, lessonId: exercise.lessonId } } });
@@ -56,33 +62,44 @@ export async function submitExerciseAnswer(userId: string, exerciseId: string, a
       },
     }),
   ]);
-  const explanation = exercise.translations.find((item) => item.locale === locale)?.explanation
-    ?? exercise.translations.find((item) => item.locale === "ru")?.explanation
-    ?? "";
-  return { isCorrect, explanation };
+  const fallback = exercise.lesson.module.course.sourceLanguage;
+  const explanation = localized(exercise.translations, locale, fallback)?.explanation ?? "";
+  const correctOption = exercise.options.find((option) => option.isCorrect);
+  const correctOptionText = correctOption ? localized(correctOption.translations, locale, fallback)?.text : undefined;
+  // The solution is revealed only after an answer was submitted, as in the lesson UI.
+  const solution = exerciseSolution(exercise.type, payload, correctOptionText);
+  return { isCorrect, explanation, solution };
 }
 
+// Cloudflare D1 has no transactions (Prisma runs each query separately), so the
+// reward is protected by an atomic conditional update instead: only the request
+// that flips the progress row to COMPLETED grants XP, even under concurrency.
 export async function completeLesson(userId: string, lessonId: string) {
-  return prisma.$transaction(async (tx) => {
-    const [user, lesson, progress] = await Promise.all([
-      tx.user.findUniqueOrThrow({ where: { id: userId }, include: { preference: true } }),
-      tx.lesson.findUniqueOrThrow({ where: { id: lessonId }, include: { exercises: { where: { status: "PUBLISHED" } } } }),
-      tx.userLessonProgress.findUniqueOrThrow({ where: { userId_lessonId: { userId, lessonId } } }),
-    ]);
-    const attempted = await tx.userExerciseAttempt.groupBy({ by: ["exerciseId"], where: { userId, lessonProgressId: progress.id } });
-    if (attempted.length < lesson.exercises.length) throw new Error("LESSON_INCOMPLETE");
-    const xpGrant = lessonXpGrant(progress.status, lesson.xpReward);
-    if (!xpGrant) return { earnedXp: progress.earnedXp, totalXp: user.xp, alreadyCompleted: true };
-    const timezone = user.preference?.timezone ?? "Asia/Tashkent";
-    const streak = nextStreakState(user.lastActivityDate, new Date(), timezone, user.streak, user.longestStreak);
-    const updated = await tx.user.update({
-      where: { id: userId },
-      data: { xp: { increment: xpGrant }, streak: streak.streak, longestStreak: streak.longestStreak, lastActivityDate: new Date() },
-    });
-    await tx.userLessonProgress.update({
-      where: { id: progress.id },
-      data: { status: "COMPLETED", completedAt: new Date(), earnedXp: xpGrant },
-    });
-    return { earnedXp: xpGrant, totalXp: updated.xp, alreadyCompleted: false };
+  const [user, lesson, progress] = await Promise.all([
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, include: { preference: true } }),
+    prisma.lesson.findUniqueOrThrow({ where: { id: lessonId }, include: { exercises: { where: { status: "PUBLISHED" } } } }),
+    prisma.userLessonProgress.findUniqueOrThrow({ where: { userId_lessonId: { userId, lessonId } } }),
+  ]);
+  const attempted = await prisma.userExerciseAttempt.groupBy({ by: ["exerciseId"], where: { userId, lessonProgressId: progress.id } });
+  if (attempted.length < lesson.exercises.length) throw new Error("LESSON_INCOMPLETE");
+  const xpGrant = lessonXpGrant(progress.status, lesson.xpReward);
+  if (!xpGrant) return { earnedXp: progress.earnedXp, totalXp: user.xp, alreadyCompleted: true };
+
+  const claimed = await prisma.userLessonProgress.updateMany({
+    where: { id: progress.id, status: { not: "COMPLETED" } },
+    data: { status: "COMPLETED", completedAt: new Date(), earnedXp: xpGrant },
   });
+  if (claimed.count === 0) {
+    const current = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { xp: true } });
+    const completed = await prisma.userLessonProgress.findUniqueOrThrow({ where: { id: progress.id }, select: { earnedXp: true } });
+    return { earnedXp: completed.earnedXp, totalXp: current.xp, alreadyCompleted: true };
+  }
+
+  const timezone = user.preference?.timezone ?? "Asia/Tashkent";
+  const streak = nextStreakState(user.lastActivityDate, new Date(), timezone, user.streak, user.longestStreak);
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: { xp: { increment: xpGrant }, streak: streak.streak, longestStreak: streak.longestStreak, lastActivityDate: new Date() },
+  });
+  return { earnedXp: xpGrant, totalXp: updated.xp, alreadyCompleted: false };
 }

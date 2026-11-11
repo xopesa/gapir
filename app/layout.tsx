@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { QueryProvider } from "@/src/lib/query-client";
 import { ThemeProvider } from "@/src/components/theme/theme-provider";
 import { SoundProvider } from "@/src/components/sound/sound-provider";
 import { THEME_INIT_SCRIPT } from "@/src/lib/theme/theme-manager";
 import "./globals.css";
+import "./duo.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -12,7 +13,23 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+// Phone-first: draw under the notch / home indicator (safe-area insets are
+// handled in CSS) and tint the browser/status bar with the app background.
+// Pinch-zoom stays enabled for accessibility.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fbff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b1020" },
+  ],
+};
+
 export const metadata: Metadata = {
+  applicationName: "Gapir",
+  appleWebApp: { capable: true, title: "Gapir", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),

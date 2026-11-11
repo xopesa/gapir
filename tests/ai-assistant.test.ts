@@ -6,7 +6,9 @@ import { getAiFeatureFlags } from "@/src/server/ai/config/feature-flags";
 import { calculateEstimatedCost } from "@/src/server/ai/cost/cost-tracker";
 import { AiError } from "@/src/server/ai/errors/ai-error";
 import { resolveDirection } from "@/src/server/ai/languages/registry";
+import { readFile } from "node:fs/promises";
 import { compileTutorPrompt, selectTutorPromptPath } from "@/src/server/ai/prompts/prompt-manager";
+import { tutorPromptTemplates } from "@/src/server/ai/prompts/templates.generated";
 import type { SpeechToTextProvider } from "@/src/server/ai/providers/contracts";
 import { MockSpeechToTextProvider, MockTextToSpeechProvider, MockTutorLlmProvider } from "@/src/server/ai/providers/mock-providers";
 import { OpenAiTutorLlmProvider } from "@/src/server/ai/providers/openai-providers";
@@ -79,6 +81,11 @@ describe("Gapir AI Assistant Stage 3.1", () => {
     expect(prompt.version).toBe("tutor-v1");
     expect(prompt.systemPrompt).toContain("TARGET_LANGUAGE=uz");
     expect(prompt.userPrompt).toContain("Salom");
+    // Embedded templates (used on Cloudflare Workers) must match ai/prompts/*.md.
+    for (const direction of ["uz_to_zh", "zh_to_uz"] as const) {
+      const fromDisk = (await readFile(selectTutorPromptPath(direction), "utf8")).replace(/\r\n/g, "\n");
+      expect(tutorPromptTemplates[direction], "run npm run prompts:build").toBe(fromDisk);
+    }
   });
 
   it("validates only supported tutor directions", () => {

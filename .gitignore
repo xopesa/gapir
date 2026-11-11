@@ -48,3 +48,12 @@ next-env.d.ts
 /generated/prisma
 /services/ai-workers/.venv/
 /services/ai-workers/models/
+
+# cloudflare / opennext
+/.open-next/
+/prisma/.schema.cloudflare.prisma
+.dev.vars*
+!.dev.vars.example
+
+# source textbooks (large, copyrighted) — kept locally only
+/методички/
