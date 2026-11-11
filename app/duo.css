@@ -192,6 +192,8 @@ button, a { touch-action: manipulation; }
 
 .duo-path { display: flex; flex-direction: column; align-items: center; gap: 34px; margin: 68px 0 0; padding: 0; list-style: none; }
 .duo-path-item { position: relative; display: flex; width: 100%; justify-content: center; }
+/* Room for the "start / continue" bubble so it never touches the lesson above. */
+.duo-path-item:has(.duo-start-tag) { margin-top: 26px; }
 .duo-node { position: relative; display: flex; width: 120px; flex-direction: column; align-items: center; gap: 6px; transform: translateX(var(--offset)); color: inherit; text-decoration: none; }
 .duo-node-btn {
   display: grid; width: 72px; height: 66px; place-items: center; border-radius: 50%; color: #fff;
@@ -205,7 +207,8 @@ button, a { touch-action: manipulation; }
 .duo-node-btn.is-current { outline: 6px solid color-mix(in srgb, var(--color-primary) 22%, transparent); outline-offset: 6px; }
 .duo-node-label { max-width: 130px; color: var(--color-text-secondary); font-size: .78rem; font-weight: 750; line-height: 1.25; text-align: center; }
 .duo-start-tag {
-  position: absolute; top: -44px; z-index: 2; padding: 7px 12px; border: 2px solid var(--color-border); border-radius: 12px;
+  /* Above the current node's ring (outline 6px + offset 6px), arrow included. */
+  position: absolute; top: -66px; z-index: 2; padding: 7px 12px; border: 2px solid var(--color-border); border-radius: 12px;
   background: var(--color-surface); color: var(--color-primary); font-size: .8rem; font-weight: 900; text-transform: uppercase; white-space: nowrap;
 }
 .duo-start-tag::after { content: ""; position: absolute; bottom: -8px; left: 50%; width: 12px; height: 12px; transform: translateX(-50%) rotate(45deg); border-right: 2px solid var(--color-border); border-bottom: 2px solid var(--color-border); background: var(--color-surface); }
