@@ -46,7 +46,10 @@ jobs:
           mkdir -p assets
           cp public/gapir-logo.png assets/icon-only.png
           cp public/gapir-logo.png assets/icon-foreground.png
-          npx --yes @capacitor/assets@3.0.5 generate --android --iconBackgroundColor "#ffffff" --iconBackgroundColorDark "#0b1020" --splashBackgroundColor "#f8fbff" --splashBackgroundColorDark "#0b1020"
+          # A background image (not a colour): the colour option leaves the
+          # adaptive icon pointing at a missing mipmap/ic_launcher_background.
+          cp mobile/icon-background.png assets/icon-background.png
+          npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#f8fbff" --splashBackgroundColorDark "#0b1020"
           npx cap sync android
 
       - name: Build the APK
