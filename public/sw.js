@@ -2,7 +2,7 @@
 // - Static files (/_next/static, audio, images): cache first.
 // - Pages: network first; when offline the cached /offline app is shown,
 //   which plays lessons from the course package stored on the device.
-const CACHE = "gapir-offline-v1";
+const CACHE = "gapir-offline-v2";
 const OFFLINE_URL = "/offline";
 
 self.addEventListener("install", (event) => {

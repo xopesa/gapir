@@ -5,7 +5,7 @@ import { narrationAudio, phraseAudio } from "@/src/content/audio-manifest.genera
 import { narrationKey } from "@/src/lib/audio-keys";
 import { flushOfflineQueue, refreshOfflinePack } from "./offline-store";
 
-const CACHE = "gapir-offline-v1";
+const CACHE = "gapir-offline-v2";
 const REFRESH_KEY = "gapir-offline-refreshed";
 const REFRESH_EVERY_MS = 10 * 60 * 1000;
 
