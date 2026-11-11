@@ -13,13 +13,15 @@ export function OnboardingForm({ initialLocale, initialTheme = "system" }: { ini
   const router = useRouter();
   const [locale, setLocale] = useState(initialLocale);
   const [targetLanguage, setTarget] = useState<"uz" | "zh" | "ru">("uz");
-  const [sourceLanguage, setSource] = useState<"ru" | "en" | "zh" | "uz">("ru");
+  // Uzbek is explained in the learner's own language when a course exists for it.
+  const uzSource = (value: Locale) => (value === "zh" || value === "en" ? value : "ru");
+  const [sourceLanguage, setSource] = useState<"ru" | "en" | "zh" | "uz">(uzSource(initialLocale));
   const [dailyGoalMinutes, setGoal] = useState<5 | 10 | 15 | 20>(10);
   const [error, setError] = useState("");
   const dictionary = getDictionary(locale);
   // Directions with published courses; Russian is taught to Chinese speakers.
   const allowedSources = targetLanguage === "uz" ? ["ru", "en", "zh"] : targetLanguage === "ru" ? ["zh"] : ["uz", "ru", "en"];
-  const defaultSource = (target: "uz" | "zh" | "ru") => (target === "uz" ? "ru" : target === "ru" ? "zh" : "uz");
+  const defaultSource = (target: "uz" | "zh" | "ru") => (target === "uz" ? uzSource(locale) : target === "ru" ? "zh" : "uz");
   const submit = async () => {
     const response = await fetch("/api/preferences", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale, targetLanguage, sourceLanguage, dailyGoalMinutes, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Tashkent" }) });
     if (!response.ok) { setError(dictionary.common.error); return; }

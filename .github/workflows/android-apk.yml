@@ -22,19 +22,20 @@ jobs:
       # Production address of the site; set the repository variable to override.
       GAPIR_APP_URL: ${{ vars.GAPIR_APP_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "21"
 
-      - uses: android-actions/setup-android@v3
+      # ubuntu runners ship the Android SDK (ANDROID_HOME); Gradle fetches
+      # the platform/build-tools it needs and the licenses are pre-accepted.
 
       # Only the Capacitor CLI is needed here: skip native builds of server deps.
       - run: npm ci --ignore-scripts
