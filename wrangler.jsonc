@@ -20,7 +20,7 @@
       "binding": "DB",
       "database_name": "gapir-db",
       // Replace with the id printed by `npx wrangler d1 create gapir-db`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "c650a828-eab8-46ac-9c0f-72c693279245",
       // Generated from prisma/migrations by `npm run cf:migrations`.
       "migrations_dir": "migrations"
     }

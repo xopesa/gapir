@@ -57,3 +57,7 @@ next-env.d.ts
 
 # source textbooks (large, copyrighted) — kept locally only
 /методички/
+
+# Capacitor (generated in CI)
+/android/
+/assets/

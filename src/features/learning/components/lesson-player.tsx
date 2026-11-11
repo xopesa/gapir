@@ -12,6 +12,7 @@ import type { SoundSettings } from "@/src/lib/sound/sound-types";
 import { applyTheme } from "@/src/lib/theme/theme-manager";
 import type { ThemePreference } from "@/src/lib/theme/theme-types";
 import { useSpeech } from "../hooks/use-speech";
+import { checkOffline, isLessonCompleted, offlineStore } from "@/src/features/offline/offline-store";
 
 type ExerciseType = "MULTIPLE_CHOICE" | "ARRANGE_WORDS" | "MATCHING" | "TRANSLATE";
 
@@ -39,6 +40,11 @@ function isAnswerReady(exercise: ExerciseView, answer: Answer) {
   if (exercise.type === "MATCHING") return Object.keys(answer as Record<string, string>).length === (exercise.payload.left?.length ?? 0);
   if (Array.isArray(answer)) return answer.length > 0;
   return String(answer).trim().length > 0;
+}
+
+function ExitLink({ onExit, className, label, children }: { onExit?: () => void; className: string; label?: string; children: React.ReactNode }) {
+  if (onExit) return <button type="button" className={className} aria-label={label} onClick={onExit}>{children}</button>;
+  return <Link href="/" className={className} aria-label={label}>{children}</Link>;
 }
 
 // ─── Exercise controls ──────────────────────────────────────────────────────
@@ -163,7 +169,12 @@ function Bubble({ mascot, mood = "idle", children, size = 92 }: { mascot: Mascot
   </div>;
 }
 
-export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { lesson: LessonView; dictionary: AppDictionary; soundSettings: SoundSettings; theme: ThemePreference }) {
+/**
+ * Online the server checks every answer. When the network is gone (or `offline`
+ * is set by the offline app) answers are checked against the downloaded course
+ * package and the finished lesson is queued, to be replayed on the server later.
+ */
+export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline = false, onExit }: { lesson: LessonView; dictionary: AppDictionary; soundSettings: SoundSettings; theme: ThemePreference; offline?: boolean; onExit?: () => void }) {
   useSoundSettings(soundSettings, true);
   useEffect(() => { applyTheme(theme, true); }, [theme]);
   const reduced = useReducedMotion();
@@ -184,6 +195,14 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
   const [startedAt, setStartedAt] = useState(0);
   const [result, setResult] = useState<{ earnedXp: number; seconds: number } | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  const [localMode, setLocalMode] = useState(offline);
+  // Answers given without a network, replayed on the server when it is back.
+  const offlineAttempts = useRef<Array<{ exerciseId: string; answer: unknown }>>([]);
+  /** The downloaded package if it covers this lesson. */
+  const offlinePack = useCallback(() => {
+    const pack = offlineStore.pack();
+    return pack?.lessons[lesson.id] ? pack : null;
+  }, [lesson.id]);
 
   const exercise = queue.length ? lesson.exercises[queue[0]] : undefined;
   const progress = total ? Math.round((solved.size / total) * 100) : 0;
@@ -191,9 +210,10 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
 
   const begin = async () => {
     setBusy(true); setError(false);
-    const response = await fetch(`/api/progress/lessons/${lesson.id}/start`, { method: "POST" }).catch(() => null);
+    const response = localMode ? null : await fetch(`/api/progress/lessons/${lesson.id}/start`, { method: "POST" }).catch(() => null);
     setBusy(false);
-    if (!response?.ok) { setError(true); return; }
+    if (!response && offlinePack()) setLocalMode(true);
+    else if (!response?.ok) { setError(true); return; }
     setStartedAt(Date.now()); setPhase("play");
   };
 
@@ -206,13 +226,21 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
   const check = useCallback(async () => {
     if (!exercise || feedback || busy || !isAnswerReady(exercise, answer)) return;
     setBusy(true); setError(false);
-    const response = await fetch(`/api/progress/exercises/${exercise.id}/answer`, {
+    const submitted = typeof answer === "string" ? answer.trim() : answer;
+    const response = localMode ? null : await fetch(`/api/progress/exercises/${exercise.id}/answer`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ answer: typeof answer === "string" ? answer.trim() : answer }),
+      body: JSON.stringify({ answer: submitted }),
     }).catch(() => null);
     setBusy(false);
-    if (!response?.ok) { setError(true); return; }
-    const payload = await response.json() as { isCorrect: boolean; explanation: string; solution?: string };
+    let payload: { isCorrect: boolean; explanation: string; solution?: string } | null = null;
+    if (response?.ok) payload = await response.json() as { isCorrect: boolean; explanation: string; solution?: string };
+    else if (!response) {
+      // No network: check locally and remember the answer for the server.
+      const pack = offlinePack();
+      payload = pack ? checkOffline(pack, exercise.id, submitted) : null;
+      if (payload) { setLocalMode(true); offlineAttempts.current.push({ exerciseId: exercise.id, answer: submitted }); }
+    }
+    if (!payload) { setError(true); return; }
     const praises = [t.praise1, t.praise2, t.praise3];
     setFeedback({ ...payload, praise: payload.isCorrect ? praises[(solved.size + firstTryCorrect) % praises.length] : t.incorrect });
     const firstTry = !attempted.has(exercise.id);
@@ -224,21 +252,32 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
       playSound("wrongAnswer"); vibrate([30, 40, 30]);
       setHearts((value) => Math.max(0, value - 1));
     }
-  }, [answer, attempted, busy, exercise, feedback, firstTryCorrect, solved.size, t]);
+  }, [answer, attempted, busy, exercise, feedback, firstTryCorrect, localMode, offlinePack, solved.size, t]);
 
   const finish = useCallback(async () => {
     setBusy(true); setError(false);
-    const response = await fetch(`/api/progress/lessons/${lesson.id}/complete`, { method: "POST" }).catch(() => null);
+    const response = localMode ? null : await fetch(`/api/progress/lessons/${lesson.id}/complete`, { method: "POST" }).catch(() => null);
     setBusy(false);
-    if (!response?.ok) { setError(true); return; }
-    const payload = await response.json() as { earnedXp: number; alreadyCompleted?: boolean };
+    let payload: { earnedXp: number; alreadyCompleted?: boolean } | null = null;
+    if (response?.ok) {
+      payload = await response.json() as { earnedXp: number; alreadyCompleted?: boolean };
+      offlineStore.markDone(lesson.id); // the offline path shows it as done right away
+    }
+    else if (!response && offlinePack()) {
+      // Finished offline: queue it; XP is granted by the server when it syncs.
+      const pack = offlinePack()!;
+      const alreadyCompleted = isLessonCompleted(pack, lesson.id);
+      offlineStore.enqueue({ lessonId: lesson.id, attempts: offlineAttempts.current, finishedAt: new Date().toISOString(), xp: alreadyCompleted ? 0 : lesson.xpReward });
+      payload = { earnedXp: lesson.xpReward, alreadyCompleted };
+    }
+    if (!payload) { setError(true); return; }
     // A replay doesn't grant XP again; the server echoes the original reward.
     const earnedXp = payload.alreadyCompleted ? 0 : payload.earnedXp;
     setResult({ earnedXp, seconds: Math.max(1, Math.round((Date.now() - startedAt) / 1000)) });
     setPhase("done");
     playSound("lessonComplete");
     if (earnedXp > 0) window.setTimeout(() => playSound("xpReward"), 320);
-  }, [lesson.id, startedAt]);
+  }, [lesson.id, lesson.xpReward, localMode, offlinePack, startedAt]);
 
   const proceed = useCallback(() => {
     if (!exercise || !feedback) return;
@@ -278,7 +317,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
   if (phase === "intro") {
     const lines = lesson.theory.split("\n").map((line) => line.trim()).filter(Boolean);
     return <main className="duo-lesson">
-      <header className="duo-topbar"><Link href="/" className="duo-icon-btn" aria-label={t.quit}><X weight="bold" /></Link><div className="duo-topbar-title">{lesson.title}</div><span className="duo-topbar-spacer" /></header>
+      <header className="duo-topbar"><ExitLink onExit={onExit} className="duo-icon-btn" label={t.quit}><X weight="bold" /></ExitLink><div className="duo-topbar-title">{lesson.title}</div><span className="duo-topbar-spacer" /></header>
       <div className="duo-body duo-intro">
         <Bubble mascot="panda" size={104}><strong className="duo-intro-title">{lesson.title}</strong><span>{lesson.description}</span></Bubble>
         <ol className="duo-theory">{lines.map((line, index) => <motion.li key={index} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: reduced ? 0 : 0.06 * index }}>{line}</motion.li>)}</ol>
@@ -295,7 +334,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
         <h1 className="duo-title">{t.outOfHearts}</h1>
         <p className="duo-subtitle">{t.outOfHeartsText}</p>
       </div>
-      <footer className="duo-footer duo-footer-stack"><button type="button" className="duo-btn duo-btn-primary" onClick={restart}><ArrowCounterClockwise weight="bold" /> {t.retry}</button><Link href="/" className="duo-btn duo-btn-ghost">{t.quit}</Link></footer>
+      <footer className="duo-footer duo-footer-stack"><button type="button" className="duo-btn duo-btn-primary" onClick={restart}><ArrowCounterClockwise weight="bold" /> {t.retry}</button><ExitLink onExit={onExit} className="duo-btn duo-btn-ghost">{t.quit}</ExitLink></footer>
     </main>;
   }
 
@@ -313,7 +352,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
           <div className="duo-stat stat-time"><span>{t.time}</span><strong><Timer weight="bold" /> {time}</strong></div>
         </div>
       </div>
-      <footer className="duo-footer"><Link href="/" className="duo-btn duo-btn-primary">{t.continue}</Link></footer>
+      <footer className="duo-footer"><ExitLink onExit={onExit} className="duo-btn duo-btn-primary">{t.continue}</ExitLink></footer>
     </main>;
   }
 
@@ -325,7 +364,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme }: { les
 
   return <main className="duo-lesson">
     <header className="duo-topbar">
-      <Link href="/" className="duo-icon-btn" aria-label={t.quit}><X weight="bold" /></Link>
+      <ExitLink onExit={onExit} className="duo-icon-btn" label={t.quit}><X weight="bold" /></ExitLink>
       <div className="duo-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><motion.div className="duo-progress-fill" animate={{ width: `${Math.max(progress, 3)}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }} /></div>
       <div className={`duo-hearts${hearts <= 1 ? " is-low" : ""}`} aria-label={`${hearts} / ${MAX_HEARTS}`}><Heart weight="fill" /><motion.span key={hearts} initial={reduced ? false : { scale: 1.6 }} animate={{ scale: 1 }}>{hearts}</motion.span></div>
     </header>

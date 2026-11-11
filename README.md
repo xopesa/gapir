@@ -163,3 +163,10 @@ OAuth, AI, распознавание речи, реальные платежи,
 - Звуковой менеджер находится в `src/lib/sound`. Он не воспроизводит звук до первого взаимодействия пользователя и использует безопасный Web Audio fallback, если MP3 отсутствует.
 - Production MP3-файлы нужно положить в `public/sounds` с именами, перечисленными в `public/sounds/README.md`.
 - Переключатель языка использует desktop popover и mobile bottom sheet; нативный `select` для языка интерфейса больше не используется.
+
+## Приложение для Android, гостевой вход и офлайн
+
+- **Production:** https://gapir.gapir-web.workers.dev (Cloudflare Workers + D1 `gapir-db`). Контент в D1 переносится из локальной базы без пользователей: `node scripts/export-content-sql.mjs > .open-next/content.sql` и `npx wrangler d1 execute gapir-db --remote --file .open-next/content.sql`.
+- **Без логина и пароля:** неавторизованный ученик попадает на `/start`, где сразу создаётся гостевой аккаунт с сессией (`POST /api/auth/guest`). У гостя нет пароля: в `passwordHash` лежит не bcrypt-хеш, поэтому вход по паролю невозможен. Админка по-прежнему требует `/login`.
+- **Офлайн:** приложение скачивает пакет курса с ответами (`GET /api/offline/pack`) в `localStorage`. Без сети плеер проверяет ответы на устройстве (`src/lib/answer-check.ts` — тот же код, что на сервере), а пройденные уроки ставит в очередь. При появлении сети очередь уходит в `POST /api/offline/sync`: сервер заново проверяет ответы и сам начисляет XP. Service worker (`public/sw.js`, только в production) кэширует статику и аудио и показывает `/offline`, если страница не загрузилась.
+- **APK:** Capacitor-обёртка (`capacitor.config.ts`, `mobile/www`) открывает production-сайт с `/start`. Сборка — GitHub Actions `.github/workflows/android-apk.yml` (артефакт `gapir-apk`, debug-подпись). Адрес можно переопределить переменной репозитория `GAPIR_APP_URL`.

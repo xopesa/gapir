@@ -4,6 +4,7 @@ import { QueryProvider } from "@/src/lib/query-client";
 import { ThemeProvider } from "@/src/components/theme/theme-provider";
 import { SoundProvider } from "@/src/components/sound/sound-provider";
 import { THEME_INIT_SCRIPT } from "@/src/lib/theme/theme-manager";
+import { OfflineAgent } from "@/src/features/offline/offline-agent";
 import "./globals.css";
 import "./duo.css";
 
@@ -65,7 +66,7 @@ export default function RootLayout({
     <html lang="ru" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} /></head>
       <body className={`${jakarta.variable} antialiased`}>
-        <ThemeProvider><SoundProvider><QueryProvider>{children}</QueryProvider></SoundProvider></ThemeProvider>
+        <ThemeProvider><SoundProvider><QueryProvider>{children}<OfflineAgent /></QueryProvider></SoundProvider></ThemeProvider>
       </body>
     </html>
   );

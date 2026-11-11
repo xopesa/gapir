@@ -29,7 +29,13 @@ function NodeIcon({ status, type }: { status: LessonStatus; type?: LessonType })
   return <Star weight="fill" />;
 }
 
-export function LearningScreen({ user, dictionary, dashboard }: { user: AppUser; dictionary: AppDictionary; dashboard: LearningDashboardView }) {
+/** A lesson link online; inside the offline app lessons open in place. */
+function LessonLink({ id, onOpen, className, label, children }: { id: string; onOpen?: (id: string) => void; className: string; label?: string; children: React.ReactNode }) {
+  if (onOpen) return <button type="button" className={className} aria-label={label} onClick={() => onOpen(id)}>{children}</button>;
+  return <Link href={`/learn/${id}`} className={className} aria-label={label}>{children}</Link>;
+}
+
+export function LearningScreen({ user, dictionary, dashboard, onOpenLesson, banner }: { user: Pick<AppUser, "name">; dictionary: AppDictionary; dashboard: LearningDashboardView; onOpenLesson?: (id: string) => void; banner?: React.ReactNode }) {
   const reduced = useReducedMotion();
   const lessons = dashboard.modules.flatMap((module) => module.lessons);
   const current = lessons.find((lesson) => lesson.status === "in_progress") ?? lessons.find((lesson) => lesson.status === "available");
@@ -46,6 +52,7 @@ export function LearningScreen({ user, dictionary, dashboard }: { user: AppUser;
       </div>
       <span className="duo-course-greet">{dictionary.learning.greeting}, {user.name.split(/\s+/)[0]}!</span>
     </header>
+    {banner}
 
     {dashboard.modules.map((module, moduleIndex) => {
       const done = module.lessons.filter((lesson) => lesson.status === "completed").length;
@@ -57,7 +64,7 @@ export function LearningScreen({ user, dictionary, dashboard }: { user: AppUser;
             <h2>{module.title.replace(/^[^·]*·\s*/, "")}</h2>
             {module.description && <p>{module.description}</p>}
           </div>
-          {current && module.lessons.some((lesson) => lesson.id === current.id) && <Link href={`/learn/${current.id}`} className="duo-unit-cta" aria-label={dictionary.learning.continue}><BookOpen weight="fill" /></Link>}
+          {current && module.lessons.some((lesson) => lesson.id === current.id) && <LessonLink id={current.id} onOpen={onOpenLesson} className="duo-unit-cta" label={dictionary.learning.continue}><BookOpen weight="fill" /></LessonLink>}
         </div>
 
         <ol className="duo-path">
@@ -74,7 +81,7 @@ export function LearningScreen({ user, dictionary, dashboard }: { user: AppUser;
             return <li key={lesson.id} className="duo-path-item" style={{ "--offset": `${offset}px` } as React.CSSProperties}>
               {lesson.status === "locked"
                 ? <div className="duo-node" aria-disabled="true" title={dictionary.learning.locked}>{node}</div>
-                : <Link href={`/learn/${lesson.id}`} className="duo-node">{node}</Link>}
+                : <LessonLink id={lesson.id} onOpen={onOpenLesson} className="duo-node">{node}</LessonLink>}
               {showMascot && <Mascot kind={UNIT_MASCOTS[(moduleIndex + Math.floor(index / 5) + 1) % 3]} mood="idle" size={92} className={`duo-path-mascot ${offset >= 0 ? "on-left" : "on-right"}`} />}
             </li>;
           })}

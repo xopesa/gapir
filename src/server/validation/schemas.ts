@@ -13,6 +13,8 @@ export const loginSchema = z.object({
   locale: z.enum(locales).optional(),
 });
 
+export const guestSchema = z.object({ locale: z.enum(locales).default("zh") });
+
 export const registerSchema = z
   .object({
     name: z.string().trim().min(2).max(80),

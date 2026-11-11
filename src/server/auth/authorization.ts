@@ -8,14 +8,15 @@ export function canAccessAdmin(role: UserRole | string) {
   return adminRoles.includes(role as UserRole);
 }
 
-export async function requireUser(returnTo = "/") {
+// Learners start without an account (guest session via /start); staff sign in.
+export async function requireUser(returnTo = "/", entry: "/start" | "/login" = "/start") {
   const user = await getCurrentUser();
-  if (!user) redirect(`/login?returnTo=${encodeURIComponent(returnTo)}`);
+  if (!user) redirect(`${entry}?returnTo=${encodeURIComponent(returnTo)}`);
   return user;
 }
 
 export async function requireAdmin(returnTo = "/admin") {
-  const user = await requireUser(returnTo);
+  const user = await requireUser(returnTo, "/login");
   if (!canAccessAdmin(user.role)) redirect("/");
   return user;
 }
