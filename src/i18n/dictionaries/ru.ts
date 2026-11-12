@@ -34,7 +34,7 @@ export const ru = {
     start: "Начать обучение",
   },
   learning: {
-    greeting: "Салом", subtitle: "Ещё один маленький шаг — и новый язык станет ближе.",
+    lessonsLabel: "Уроки", minutesLabel: "Минуты", greeting: "Салом", subtitle: "Ещё один маленький шаг — и новый язык станет ближе.",
     section: "Ваш маршрут", continue: "Продолжить обучение", empty: "Опубликованных уроков пока нет.",
     progress: "Прогресс курса", lesson: "Урок", available: "Доступен", inProgress: "В процессе",
     completed: "Завершён", locked: "Закрыт", minutes: "мин",
