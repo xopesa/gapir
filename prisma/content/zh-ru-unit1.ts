@@ -7,6 +7,7 @@
 import { I, meaning, same, type CourseContent } from "./common";
 import { ruUnit2 } from "./zh-ru-unit2";
 import { ruUnit3 } from "./zh-ru-unit3";
+import { RU_VOICE } from "./zh-ru-voice";
 
 export const zhRuCourse: CourseContent = {
   slug: "zh-ru-a1",
@@ -551,3 +552,8 @@ export const zhRuCourse: CourseContent = {
     ruUnit3,
   ],
 };
+
+// Listening and speaking practice (zh-ru-voice.ts) closes each lesson.
+RU_VOICE.forEach((unit, unitIndex) => unit.forEach((extra, lessonIndex) => {
+  zhRuCourse.modules[unitIndex].lessons[lessonIndex].exercises.push(...extra);
+}));

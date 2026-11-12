@@ -12,7 +12,7 @@ describe("offline mode", () => {
     for (const exercise of exercises) {
       const full = exercise as unknown as Record<string, unknown>;
       // Same subset getOfflinePack ships to the phone.
-      const key = { acceptedAnswers: full.acceptedAnswers, correctWords: full.correctWords, pairs: full.pairs };
+      const key = { acceptedAnswers: full.acceptedAnswers, correctWords: full.correctWords, pairs: full.pairs, say: full.say };
       const label = exercise.question.zh;
       if (exercise.type === "MULTIPLE_CHOICE") {
         expect(checkExerciseAnswer(exercise.type, key, "opt-correct", "opt-correct"), label).toBe(true);

@@ -7,7 +7,18 @@ export { checkExerciseAnswer, exerciseSolution, normalizeText };
 export type { ExercisePayload };
 
 // Display-only payload fields that are safe to send to the browser (no answers).
-const DISPLAY_FIELDS = ["prompt", "speak", "listen", "mascot", "optionImages", "image"] as const;
+const DISPLAY_FIELDS = ["prompt", "speak", "listen", "say", "mascot", "optionImages", "image"] as const;
+
+/**
+ * Tiles for an answer that used to be typed: its words, or its letters when it
+ * is one word. Lessons never ask for the keyboard.
+ */
+export function answerTiles(payload: ExercisePayload, seed: string) {
+  if (Array.isArray(payload.words) && payload.words.length) return payload.words.map(String);
+  const answer = String((Array.isArray(payload.acceptedAnswers) ? payload.acceptedAnswers[0] : "") ?? "").replace(/[.!?,;:。！？，；：]+/g, " ").trim();
+  const words = answer.split(/\s+/).filter(Boolean);
+  return shuffled(words.length > 1 ? words : [...answer], seed);
+}
 
 export function parsePayload(payload: string): ExercisePayload {
   try { return JSON.parse(payload) as ExercisePayload; } catch { return {}; }
@@ -88,6 +99,7 @@ export function toLessonView(lesson: LessonRecord, locale: string) {
       const teach = payload.teach as Record<string, string> | undefined;
       if (teach && typeof teach === "object") safePayload.teach = teach[locale] ?? teach[fallback] ?? teach.zh;
       if (exercise.type === "ARRANGE_WORDS") safePayload.words = Array.isArray(payload.words) ? payload.words : [];
+      if (exercise.type === "TRANSLATE" && !payload.say) safePayload.words = answerTiles(payload, exercise.id);
       if (exercise.type === "MATCHING" && Array.isArray(payload.pairs)) {
         safePayload.left = payload.pairs.map((pair) => (pair as { left: string }).left);
         safePayload.right = shuffled(payload.pairs.map((pair) => (pair as { right: string }).right), exercise.id);

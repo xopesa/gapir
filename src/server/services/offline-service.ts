@@ -38,7 +38,7 @@ export async function getOfflinePack(userId: string, locale: string) {
       answers[exercise.id] = {
         type: exercise.type,
         // Only what checking needs; display fields come with the lesson view.
-        payload: { acceptedAnswers: payload.acceptedAnswers, correctWords: payload.correctWords, pairs: payload.pairs },
+        payload: { acceptedAnswers: payload.acceptedAnswers, correctWords: payload.correctWords, pairs: payload.pairs, say: payload.say },
         correctOptionId: correct?.id,
         explanation: localized(exercise.translations, locale, fallback)?.explanation ?? "",
         solution: exerciseSolution(exercise.type, payload, correctText),

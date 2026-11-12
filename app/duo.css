@@ -361,3 +361,13 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 .duo-listen-btn { display: grid; width: 72px; height: 72px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 20px; background: var(--color-primary); color: #fff; cursor: pointer; box-shadow: 0 var(--duo-depth) 0 var(--color-primary-dark, #d8631c); }
 .duo-listen-btn svg { width: 40px; height: 40px; }
 .duo-listen-btn.is-playing { animation: duo-pulse .8s ease-in-out infinite; }
+
+/* ── Speaking exercise: a big microphone, what was heard under it ── */
+.duo-speak { display: grid; justify-items: center; gap: 14px; padding: 12px 0 4px; }
+.duo-mic { display: grid; width: 112px; height: 112px; place-items: center; border: 0; border-radius: 50%; background: var(--color-primary); color: #fff; cursor: pointer; box-shadow: 0 6px 0 var(--color-primary-dark, #d8631c), 0 0 0 10px color-mix(in srgb, var(--color-primary) 16%, transparent); transition: transform .12s ease; }
+.duo-mic svg { width: 54px; height: 54px; }
+.duo-mic:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--color-primary-dark, #d8631c), 0 0 0 10px color-mix(in srgb, var(--color-primary) 16%, transparent); }
+.duo-mic:disabled { opacity: .55; cursor: default; }
+.duo-mic.is-listening { background: var(--gx-lilac); box-shadow: 0 6px 0 color-mix(in srgb, var(--gx-lilac) 70%, #000), 0 0 0 10px color-mix(in srgb, var(--gx-lilac) 22%, transparent); animation: duo-pulse .9s ease-in-out infinite; }
+.duo-speak-hint { margin: 0; font-size: 1.05rem; font-weight: 700; text-align: center; color: var(--color-text-secondary); }
+.duo-speak-done { max-width: 320px; }

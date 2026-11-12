@@ -25,7 +25,12 @@ function payloadOf(exercise: ExerciseContent) {
     case "ARRANGE_WORDS":
       return { ...display, words: exercise.words, correctWords: exercise.correctWords };
     case "TRANSLATE":
-      return { ...display, acceptedAnswers: exercise.acceptedAnswers };
+      return {
+        ...display, acceptedAnswers: exercise.acceptedAnswers,
+        ...(exercise.speak ? { speak: exercise.speak } : {}),
+        ...(exercise.say ? { say: true } : {}),
+        ...(exercise.tiles ? { words: exercise.tiles } : {}),
+      };
   }
 }
 

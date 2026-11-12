@@ -21,6 +21,39 @@ export function normalizeText(value: unknown) {
     .toLocaleLowerCase();
 }
 
+/** Sent instead of speech when the learner cannot talk now, or the device has no speech recognition. */
+export const SPEAK_SKIP = "__cannot_speak__";
+
+function distance(a: string, b: string) {
+  let row = Array.from({ length: b.length + 1 }, (_, index) => index);
+  for (let i = 1; i <= a.length; i += 1) {
+    const next = [i];
+    for (let j = 1; j <= b.length; j += 1) next[j] = Math.min(row[j] + 1, next[j - 1] + 1, row[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    row = next;
+  }
+  return row[b.length];
+}
+
+/**
+ * Speech recognisers are imprecise with a learner's accent, so each word of the
+ * phrase only has to be heard closely enough (a letter or two off), in order;
+ * extra words around it do not matter.
+ */
+export function heardPhrase(expected: unknown, heard: unknown) {
+  const words = (value: unknown) => normalizeText(value).replace(/[—–-]/g, " ").split(/\s+/).filter(Boolean);
+  const want = words(expected);
+  const got = words(heard);
+  if (!want.length || !got.length) return false;
+  let from = 0;
+  return want.every((word) => {
+    const slack = word.length <= 2 ? 0 : word.length <= 5 ? 1 : 2;
+    const at = got.findIndex((item, index) => index >= from && distance(word, item) <= slack);
+    if (at < 0) return false;
+    from = at + 1;
+    return true;
+  });
+}
+
 export function exerciseSolution(type: ExerciseKind | string, payload: ExercisePayload, correctOptionText?: string) {
   if (type === "MULTIPLE_CHOICE") return correctOptionText ?? "";
   if (type === "TRANSLATE") return Array.isArray(payload.acceptedAnswers) ? String(payload.acceptedAnswers[0] ?? "") : "";
@@ -35,7 +68,15 @@ export function checkExerciseAnswer(type: ExerciseKind | string, payload: Exerci
   if (type === "MULTIPLE_CHOICE") return String(answer) === correctOptionId;
   if (type === "TRANSLATE") {
     const accepted = Array.isArray(payload.acceptedAnswers) ? payload.acceptedAnswers : [];
-    return accepted.some((value) => normalizeText(value) === normalizeText(answer));
+    if (payload.say) {
+      // Spoken: every alternative the recogniser returned may match.
+      if (answer === SPEAK_SKIP) return true;
+      const heard = Array.isArray(answer) ? answer : [answer];
+      return accepted.some((value) => heard.some((item) => heardPhrase(value, item)));
+    }
+    // Built from tiles: words are joined with spaces, letters without.
+    const candidates = Array.isArray(answer) ? [answer.join(" "), answer.join("")] : [answer];
+    return accepted.some((value) => candidates.some((candidate) => normalizeText(value) === normalizeText(candidate)));
   }
   if (type === "ARRANGE_WORDS") {
     const expected = Array.isArray(payload.correctWords) ? payload.correctWords.join(" ") : "";

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowCounterClockwise, CheckCircle, Heart, Lightning, SpeakerHigh, Target, Timer, X, XCircle } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, CheckCircle, Heart, Lightning, Microphone, SpeakerHigh, Target, Timer, X, XCircle } from "@phosphor-icons/react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +13,7 @@ import { applyTheme } from "@/src/lib/theme/theme-manager";
 import type { ThemePreference } from "@/src/lib/theme/theme-types";
 import { narrationAudio, phraseAudio } from "@/src/content/audio-manifest.generated";
 import { narrationKey, phraseKey } from "@/src/lib/audio-keys";
+import { SPEAK_SKIP } from "@/src/lib/answer-check";
 import { useSpeech } from "../hooks/use-speech";
 import { checkOffline, isLessonCompleted, offlineStore } from "@/src/features/offline/offline-store";
 
@@ -21,7 +22,7 @@ type ExerciseType = "MULTIPLE_CHOICE" | "ARRANGE_WORDS" | "MATCHING" | "TRANSLAT
 interface ExerciseView {
   id: string; type: ExerciseType;
   instruction: string; question: string; xpReward: number;
-  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null>; teach?: string; listen?: boolean };
+  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null>; teach?: string; listen?: boolean; say?: boolean };
   options: { id: string; text: string }[];
 }
 
@@ -130,27 +131,63 @@ function MatchControl({ exercise, answer, locked, onAnswer }: { exercise: Exerci
   </div>;
 }
 
-// Extra keys phone keyboards usually lack, per target language.
-const CHAR_KEYS: Record<string, string[]> = { uz: ["ö", "ğ", "ş", "ç", "ʼ"] };
+// Recognition languages for speaking exercises.
+const SPEECH_LOCALES: Record<string, string> = { ru: "ru-RU", uz: "uz-UZ" };
 
-function TypeControl({ answer, locked, onAnswer, placeholder, onSubmit, lang }: { answer: Answer; locked: boolean; onAnswer: (value: string) => void; placeholder: string; onSubmit: () => void; lang: string }) {
-  const value = typeof answer === "string" ? answer : "";
-  const fieldRef = useRef<HTMLTextAreaElement>(null);
-  // Insert at the caret and keep focus so the phone keyboard stays open.
-  const insert = (char: string) => {
-    const field = fieldRef.current;
-    const start = field?.selectionStart ?? value.length;
-    const end = field?.selectionEnd ?? value.length;
-    onAnswer(`${value.slice(0, start)}${char}${value.slice(end)}`);
-    requestAnimationFrame(() => { field?.focus(); field?.setSelectionRange(start + char.length, start + char.length); });
+type Recognition = { lang: string; maxAlternatives: number; interimResults: boolean; start: () => void; abort: () => void; onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null };
+
+function recognitionClass() {
+  if (typeof window === "undefined") return null;
+  const scope = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
+  return scope.SpeechRecognition ?? scope.webkitSpeechRecognition ?? null;
+}
+
+/**
+ * Speaking (book: 跟读): the learner says the phrase into the microphone and the
+ * browser's speech recognition hears it. Where there is none (the Android app's
+ * web view, Firefox) the learner repeats aloud and confirms.
+ */
+function SpeakControl({ locked, lang, onSubmit, labels }: { locked: boolean; lang: string; onSubmit: (value: string | string[]) => void; labels: { tap: string; listening: string; heard: string; skip: string; repeat: string; done: string } }) {
+  const [supported] = useState(() => Boolean(recognitionClass()));
+  const [listening, setListening] = useState(false);
+  const [heard, setHeard] = useState("");
+  const [failed, setFailed] = useState(false);
+  const active = useRef<Recognition | null>(null);
+  useEffect(() => () => active.current?.abort(), []);
+
+  const listen = () => {
+    const Recognizer = recognitionClass();
+    if (!Recognizer || listening || locked) return;
+    const recognition = new Recognizer();
+    recognition.lang = SPEECH_LOCALES[lang] ?? lang;
+    recognition.maxAlternatives = 5;
+    recognition.interimResults = false;
+    let got = false;
+    recognition.onresult = (event) => {
+      const alternatives = Array.from(event.results[0] ?? []).map((item) => item.transcript.trim()).filter(Boolean);
+      if (!alternatives.length) return;
+      got = true;
+      setHeard(alternatives[0]);
+      onSubmit(alternatives);
+    };
+    recognition.onerror = () => { setFailed(true); };
+    recognition.onend = () => { setListening(false); active.current = null; if (!got) setFailed(true); };
+    active.current = recognition;
+    setFailed(false); setHeard(""); setListening(true);
+    playSound("buttonTap");
+    try { recognition.start(); } catch { setListening(false); setFailed(true); }
   };
-  return <div className="duo-type">
-    <textarea ref={fieldRef} className="duo-textarea" value={value} disabled={locked} rows={3}
-      placeholder={placeholder} autoCapitalize="off" autoCorrect="off" spellCheck={false} lang={lang}
-      onChange={(event) => onAnswer(event.target.value)}
-      onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); onSubmit(); } }} />
-    {/* Phone keyboards rarely have the new Uzbek letters — offer them as keys. */}
-    <div className="duo-char-keys">{(CHAR_KEYS[lang] ?? []).map((char) => <button type="button" key={char} className="duo-char-key" disabled={locked} onPointerDown={(event) => event.preventDefault()} onClick={() => insert(char)}>{char}</button>)}</div>
+
+  if (!supported) {
+    return <div className="duo-speak">
+      <p className="duo-speak-hint">{labels.repeat}</p>
+      <button type="button" className="duo-btn duo-btn-primary duo-speak-done" disabled={locked} onClick={() => onSubmit(SPEAK_SKIP)}>{labels.done}</button>
+    </div>;
+  }
+  return <div className="duo-speak">
+    <button type="button" className={`duo-mic${listening ? " is-listening" : ""}`} disabled={locked} aria-label={labels.tap} aria-pressed={listening} onClick={listen}><Microphone weight="fill" /></button>
+    <p className="duo-speak-hint" aria-live="polite">{listening ? labels.listening : heard ? `${labels.heard} ${heard}` : labels.tap}</p>
+    {!locked && (failed || heard) && <button type="button" className="duo-link" onClick={() => onSubmit(SPEAK_SKIP)}>{labels.skip}</button>}
   </div>;
 }
 
@@ -292,10 +329,12 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     setPhase("play");
   };
 
-  const check = useCallback(async () => {
-    if (!exercise || feedback || busy || !isAnswerReady(exercise, answer)) return;
+  const check = useCallback(async (spoken?: string | string[]) => {
+    // Speaking exercises submit what the microphone heard right away.
+    const given = spoken ?? answer;
+    if (!exercise || feedback || busy || !isAnswerReady(exercise, given)) return;
     setBusy(true); setError(false);
-    const submitted = typeof answer === "string" ? answer.trim() : answer;
+    const submitted = typeof given === "string" ? given.trim() : given;
     const response = localMode ? null : await fetch(`/api/progress/exercises/${exercise.id}/answer`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answer: submitted }),
@@ -319,7 +358,8 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
       if (firstTry) setFirstTryCorrect((value) => value + 1);
     } else {
       playSound("wrongAnswer"); vibrate([30, 40, 30]);
-      setHearts((value) => Math.max(0, value - 1));
+      // A misheard phrase is not a mistake worth a heart: it only comes back later.
+      if (!exercise.payload.say) setHearts((value) => Math.max(0, value - 1));
     }
   }, [answer, attempted, busy, exercise, feedback, firstTryCorrect, localMode, offlinePack, solved.size, t]);
 
@@ -480,7 +520,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
             {exercise.type === "MULTIPLE_CHOICE" && <ChoiceControl exercise={exercise} answer={answer} locked={locked} onAnswer={setAnswer} />}
             {exercise.type === "ARRANGE_WORDS" && <ArrangeControl exercise={exercise} locked={locked} onAnswer={setAnswer} clearLabel={t.clear} />}
             {exercise.type === "MATCHING" && <MatchControl exercise={exercise} answer={answer} locked={locked} onAnswer={setAnswer} />}
-            {exercise.type === "TRANSLATE" && <TypeControl answer={answer} locked={locked} onAnswer={setAnswer} placeholder={t.typeHere} onSubmit={() => void check()} lang={lang} />}
+            {exercise.type === "TRANSLATE" && (exercise.payload.say
+              ? <SpeakControl locked={locked || busy} lang={lang} onSubmit={(value) => void check(value)} labels={{ tap: t.tapToSpeak, listening: t.listening, heard: t.heard, skip: t.cantSpeak, repeat: t.repeatAloud, done: t.didSay }} />
+              : <ArrangeControl exercise={exercise} locked={locked} onAnswer={setAnswer} clearLabel={t.clear} />)}
           </div>
         </motion.section>
       </AnimatePresence>
@@ -500,7 +542,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
       {error && <p className="duo-error">⚠︎</p>}
       {feedback
         ? <button type="button" className={`duo-btn ${feedback.isCorrect ? "duo-btn-success" : "duo-btn-danger"}`} disabled={busy} onClick={proceed} autoFocus>{t.continue}</button>
-        : <button type="button" className="duo-btn duo-btn-primary" disabled={!ready || busy} onClick={() => void check()}>{t.check}</button>}
+        : !exercise.payload.say && <button type="button" className="duo-btn duo-btn-primary" disabled={!ready || busy} onClick={() => void check()}>{t.check}</button>}
     </footer>
   </main>;
 }
