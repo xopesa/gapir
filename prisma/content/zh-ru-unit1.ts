@@ -7,6 +7,7 @@
 import { I, meaning, same, type CourseContent } from "./common";
 import { ruUnit2 } from "./zh-ru-unit2";
 import { ruUnit3 } from "./zh-ru-unit3";
+import { ruUnit4 } from "./zh-ru-unit4";
 import { RU_VOICE } from "./zh-ru-voice";
 
 export const zhRuCourse: CourseContent = {
@@ -550,6 +551,7 @@ export const zhRuCourse: CourseContent = {
     },
     ruUnit2,
     ruUnit3,
+    ruUnit4,
   ],
 };
 
