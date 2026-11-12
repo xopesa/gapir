@@ -21,7 +21,7 @@ type ExerciseType = "MULTIPLE_CHOICE" | "ARRANGE_WORDS" | "MATCHING" | "TRANSLAT
 interface ExerciseView {
   id: string; type: ExerciseType;
   instruction: string; question: string; xpReward: number;
-  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null> };
+  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null>; teach?: string };
   options: { id: string; text: string }[];
 }
 
@@ -172,12 +172,14 @@ function useExerciseVoice(exerciseId: string, question: string, word: string | u
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const playList = useCallback((urls: string[]) => {
     audioRef.current?.pause();
-    const [first, ...rest] = urls;
-    if (!first) return;
-    const audio = new Audio(first);
-    audioRef.current = audio;
-    audio.onended = () => { if (audioRef.current === audio) playList(rest); };
-    void audio.play().catch(() => undefined);
+    const next = ([first, ...rest]: string[]) => {
+      if (!first) return;
+      const audio = new Audio(first);
+      audioRef.current = audio;
+      audio.onended = () => { if (audioRef.current === audio) next(rest); };
+      void audio.play().catch(() => undefined);
+    };
+    next(urls);
   }, []);
   useEffect(() => {
     playList([questionUrl, wordUrl].filter((url): url is string => Boolean(url)));
@@ -248,6 +250,8 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
   const [startedAt, setStartedAt] = useState(0);
   const [result, setResult] = useState<{ earnedXp: number; seconds: number } | null>(null);
   const [reviewing, setReviewing] = useState(false);
+  // Exercises whose short explanation (payload.teach) was already shown.
+  const [taught, setTaught] = useState<Set<string>>(new Set());
   const [localMode, setLocalMode] = useState(offline);
   // Answers given without a network, replayed on the server when it is back.
   const offlineAttempts = useRef<Array<{ exerciseId: string; answer: unknown }>>([]);
@@ -260,6 +264,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
   const exercise = queue.length ? lesson.exercises[queue[0]] : undefined;
   const progress = total ? Math.round((solved.size / total) * 100) : 0;
   const mascot: MascotKind = exercise?.payload.mascot ?? MASCOT_CYCLE[(queue[0] ?? 0) % MASCOT_CYCLE.length];
+  // Step by step: before an exercise with `teach` the panda explains one thing first.
+  const teaching = phase === "play" && exercise?.payload.teach && !taught.has(exercise.id) ? exercise.payload.teach : null;
+  const learned = useCallback(() => { if (exercise) setTaught((values) => new Set(values).add(exercise.id)); }, [exercise]);
 
   const begin = async () => {
     setBusy(true); setError(false);
@@ -347,14 +354,15 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
 
   // Each new exercise starts at the top of the screen (phones keep scroll otherwise).
   const currentKey = `${queue[0] ?? "end"}-${queue.length}`;
-  useEffect(() => { window.scrollTo({ top: 0 }); }, [currentKey, phase]);
+  useEffect(() => { window.scrollTo({ top: 0 }); }, [currentKey, phase, teaching]);
 
   // Desktop keyboard: digits pick options, Enter checks / continues.
   useEffect(() => {
     if (phase !== "play") return;
     const onKey = (event: KeyboardEvent) => {
       if (event.target instanceof HTMLTextAreaElement || event.target instanceof HTMLInputElement) return;
-      if (event.key === "Enter") { event.preventDefault(); if (feedback) proceed(); else void check(); return; }
+      if (event.key === "Enter") { event.preventDefault(); if (teaching) learned(); else if (feedback) proceed(); else void check(); return; }
+      if (teaching) return;
       if (!feedback && exercise?.type === "MULTIPLE_CHOICE") {
         const option = exercise.options[Number(event.key) - 1];
         if (option) setAnswer(option.id);
@@ -362,12 +370,12 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [check, exercise, feedback, phase, proceed]);
+  }, [check, exercise, feedback, learned, phase, proceed, teaching]);
 
   const enter = reduced ? {} : { initial: { opacity: 0, x: 40 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -40 }, transition: { duration: 0.22 } };
 
   // Intro: the panda explains the lesson's theory line by line.
-  const playing = phase === "play" && exercise;
+  const playing = phase === "play" && exercise && !teaching;
   const replayQuestion = useExerciseVoice(playing ? `${exercise.id}-${queue.length}` : "", playing ? exercise.question : "", exercise?.payload.speak || exercise?.payload.prompt, lang);
 
   if (phase === "intro") {
@@ -414,16 +422,37 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
 
   if (!exercise) return <main className="duo-lesson"><div className="duo-body duo-center"><Mascot kind="panda" mood="happy" size={120} /></div></main>;
 
+  const topbar = <header className="duo-topbar">
+    <ExitLink onExit={onExit} className="duo-icon-btn" label={t.quit}><X weight="bold" /></ExitLink>
+    <div className="duo-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><motion.div className="duo-progress-fill" animate={{ width: `${Math.max(progress, 3)}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }} /></div>
+    <div className={`duo-hearts${hearts <= 1 ? " is-low" : ""}`} aria-label={`${hearts} / ${MAX_HEARTS}`}><Heart weight="fill" /><motion.span key={hearts} initial={reduced ? false : { scale: 1.6 }} animate={{ scale: 1 }}>{hearts}</motion.span></div>
+  </header>;
+
+  if (teaching) {
+    const lines = teaching.split("\n").map((line) => line.trim()).filter(Boolean);
+    return <main className="duo-lesson">
+      {topbar}
+      <div className="duo-body">
+        <AnimatePresence mode="wait">
+          <motion.section key={`teach-${exercise.id}`} className="duo-exercise duo-teach" {...enter}>
+            <Bubble mascot="panda" size={104}>
+              {/* Numbers are what the learner should remember: they stand out. */}
+              {lines.map((line, index) => <span key={index} className="duo-teach-line">{line.split(/(\d+)/).map((part, at) => (at % 2 ? <strong key={at} className="duo-teach-num">{part}</strong> : part))}</span>)}
+              <Narration text={teaching} label={t.listenTheory} />
+            </Bubble>
+          </motion.section>
+        </AnimatePresence>
+      </div>
+      <footer className="duo-footer"><button type="button" className="duo-btn duo-btn-primary" onClick={learned} autoFocus>{t.continue}</button></footer>
+    </main>;
+  }
+
   const locked = Boolean(feedback);
   const ready = isAnswerReady(exercise, answer);
   const prompt = exercise.payload.prompt;
 
   return <main className="duo-lesson">
-    <header className="duo-topbar">
-      <ExitLink onExit={onExit} className="duo-icon-btn" label={t.quit}><X weight="bold" /></ExitLink>
-      <div className="duo-progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><motion.div className="duo-progress-fill" animate={{ width: `${Math.max(progress, 3)}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }} /></div>
-      <div className={`duo-hearts${hearts <= 1 ? " is-low" : ""}`} aria-label={`${hearts} / ${MAX_HEARTS}`}><Heart weight="fill" /><motion.span key={hearts} initial={reduced ? false : { scale: 1.6 }} animate={{ scale: 1 }}>{hearts}</motion.span></div>
-    </header>
+    {topbar}
 
     <div className="duo-body">
       <AnimatePresence mode="wait">

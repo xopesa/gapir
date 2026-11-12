@@ -11,11 +11,12 @@ const REFRESH_EVERY_MS = 10 * 60 * 1000;
 
 type Pack = NonNullable<Awaited<ReturnType<typeof refreshOfflinePack>>>;
 
-/** Audio of the learner's course: its words and the narrated theory of each lesson. */
+/** Audio of the learner's course: its words, each lesson's theory and step explanations, and the questions. */
 function packAudio(pack: Pack) {
   const target = (pack.course as { targetLanguage?: string }).targetLanguage ?? "uz";
-  const narration = Object.values(pack.lessons as Record<string, { theory?: string }>)
-    .map((lesson) => (lesson.theory ? narrationAudio[narrationKey(lesson.theory)] : undefined))
+  const narration = Object.values(pack.lessons as Record<string, { theory?: string; exercises?: Array<{ question?: string; payload?: { teach?: string } }> }>)
+    .flatMap((lesson) => [lesson.theory, ...(lesson.exercises ?? []).flatMap((exercise) => [exercise.payload?.teach, exercise.question])])
+    .map((text) => (text ? narrationAudio[narrationKey(text)] : undefined))
     .filter((url): url is string => Boolean(url));
   return [...Object.values(phraseAudio[target] ?? {}), ...narration];
 }

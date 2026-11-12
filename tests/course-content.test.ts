@@ -31,7 +31,7 @@ describe("course content (zh→uz, zh→ru)", () => {
         expect(exercise.question.ru, label).toBeTruthy();
         expect(exercise.question.uz, label).toBeTruthy();
         // Content is written in the new alphabet (explanations may cite the old spelling).
-        expect(JSON.stringify({ ...exercise, explanation: undefined }), label).not.toMatch(/[OoGg][ʻ‘]/);
+        expect(JSON.stringify({ ...exercise, explanation: undefined, teach: undefined }), label).not.toMatch(/[OoGg][ʻ‘]/);
         if (exercise.type === "MATCHING") {
           // Tap-to-pair tiles need unique labels on both sides.
           expect(new Set(exercise.pairs.map((pair) => pair.left)).size, label).toBe(exercise.pairs.length);

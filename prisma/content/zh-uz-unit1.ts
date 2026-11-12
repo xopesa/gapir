@@ -28,22 +28,32 @@ export const zhUzCourse: CourseContent = {
         {
           type: "VOCABULARY", xpReward: 20, estimatedMinutes: 4,
           title: { zh: "字母与元音 A · O · U", ru: "Алфавит и гласные A · O · U", uz: "Alifbo va A · O · U unlilari", en: "Alphabet and vowels A · O · U" },
-          description: { zh: "28 个字母和前三个元音", ru: "28 букв и первые три гласные", uz: "28 harf va dastlabki uçta unli", en: "28 letters and the first three vowels" },
+          description: { zh: "28 个字母、6 个元音、22 个辅音", ru: "28 букв, 6 гласных, 22 согласных", uz: "28 harf, 6 unli, 22 undoş", en: "28 letters, 6 vowels, 22 consonants" },
+          // Short intro: the facts come one by one, each right before its exercise (`teach`).
           theory: {
-            zh: "你好！我是熊猫 Paxta，陪你学乌兹别克语。\n乌兹别克语用拉丁字母书写。我们学的是新字母表（2027 年 4 月 22 日起正式使用）：28 个字母，外加隔音符号 ʼ。\n新字母 Ö, Ğ, Ş, Ç 代替旧写法 Oʻ, Gʻ, Sh, Ch；ng 不再算一个字母。街上和旧书里还会看到旧写法。\n其中 6 个是元音：a, o, u, ö, i, e，其余 24 个音是辅音。\nA a — 舌前、低、展唇，和汉语的 a 很接近。\nO o — 舌后、低、圆唇，介于英语 arm 和 bought 之间。\nU u — 舌后、高、圆唇，像汉语的 u，但双唇更向前伸。",
-            ru: "Привет! Я панда Paxta и буду учить узбекский вместе с тобой.\nУзбекский пишется латиницей. Учим новый алфавит (официально с 22 апреля 2027 года): 28 букв и знак ʼ.\nНовые буквы Ö, Ğ, Ş, Ç заменяют старые Oʻ, Gʻ, Sh, Ch; Ng больше не отдельная буква. Старое написание ещё долго будет встречаться.\nГласных 6: a, o, u, ö, i, e — остальные 24 звука согласные.\nA a — передний, низкий, губы растянуты; почти как китайское a.\nO o — задний, низкий, губы округлены; между английскими arm и bought.\nU u — задний, высокий, губы округлены и вытянуты вперёд сильнее, чем в китайском u.",
-            uz: "Salom! Men panda Paxtaman, özbek tilini birga örganamiz.\nÖzbek tili lotin yozuvida. Yangi alifbo (2027-yil 22-apreldan): 28 harf va ʼ belgisi.\nÖ, Ğ, Ş, Ç harflari eski Oʻ, Gʻ, Sh, Ch örnida; Ng alohida harf emas.\nUnlilar 6 ta: a, o, u, ö, i, e, qolgan 24 tovuş undoş.\nA a — old qator, quyi keng, lablanmagan unli.\nO o — orqa qator, quyi keng, lablangan unli.\nU u — orqa qator, yuqori tor, lablangan unli.",
-            en: "Hi! I'm Paxta the panda and I'll learn Uzbek with you.\nUzbek uses the Latin alphabet. We learn the new alphabet (official from 22 April 2027): 28 letters plus the sign ʼ.\nThe new letters Ö, Ğ, Ş, Ç replace the old Oʻ, Gʻ, Sh, Ch; Ng is no longer a separate letter. You will still see the old spelling.\nThere are 6 vowels: a, o, u, ö, i, e; the other 24 sounds are consonants.\nA a — front, low, unrounded; close to Chinese a.\nO o — back, low, rounded; between English arm and bought.\nU u — back, high, rounded; like Chinese u but with lips pushed further forward.",
+            zh: "你好！我是熊猫 Paxta，陪你学乌兹别克语。\n今天一步一步记住三个数字：有几个字母，几个元音，几个辅音。然后学元音 A, O, U。",
+            ru: "Привет! Я панда Paxta и буду учить узбекский вместе с тобой.\nСегодня по шагам запомним три числа: сколько букв, сколько гласных и сколько согласных. Потом гласные A, O, U.",
+            uz: "Salom! Men panda Paxtaman, özbek tilini birga örganamiz.\nBugun qadamma-qadam uçta sonni eslab qolamiz: neçta harf, neçta unli, neçta undoş. Keyin A, O, U unlilari.",
+            en: "Hi! I'm Paxta the panda and I'll learn Uzbek with you.\nToday, step by step, we remember three numbers: how many letters, vowels and consonants. Then the vowels A, O, U.",
           },
           exercises: [
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", instruction: I.choose,
+              teach: { zh: "乌兹别克语用拉丁字母书写。\n新字母表一共有 28 个字母。", ru: "Узбекский пишется латиницей.\nВ новом алфавите 28 букв.", uz: "Özbek tili lotin yozuvida.\nYangi alifboda 28 ta harf bor.", en: "Uzbek is written in Latin letters.\nThe new alphabet has 28 letters." },
               question: { zh: "乌兹别克语共有多少个字母？", ru: "Сколько букв в узбекском алфавите?", uz: "Özbek alifbosida neçta harf bor?" },
               explanation: { zh: "新字母表有 28 个字母，外加隔音符号 ʼ。Ö, Ğ, Ş, Ç 代替了旧的 Oʻ, Gʻ, Sh, Ch。", ru: "В новом алфавите 28 букв и знак ʼ. Ö, Ğ, Ş, Ç заменили старые Oʻ, Gʻ, Sh, Ch.", uz: "Yangi alifboda 28 ta harf va ʼ belgisi bor." },
               options: [{ text: same("28"), correct: true }, { text: same("29") }, { text: same("26") }, { text: same("33") }],
             },
             {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", instruction: I.choose,
+              teach: { zh: "其中 4 个是新字母：Ö, Ğ, Ş, Ç。\n它们代替旧写法 Oʻ, Gʻ, Sh, Ch，街上还会看到旧写法。", ru: "Четыре буквы новые: Ö, Ğ, Ş, Ç.\nОни заменили старое написание Oʻ, Gʻ, Sh, Ch, на улице его ещё встретишь.", uz: "Törtta harf yangi: Ö, Ğ, Ş, Ç.\nUlar eski Oʻ, Gʻ, Sh, Ch örnida.", en: "Four letters are new: Ö, Ğ, Ş, Ç.\nThey replace the old Oʻ, Gʻ, Sh, Ch, which you will still see in the street." },
+              question: { zh: "旧写法 Sh 现在写成哪个字母？", ru: "Какой буквой теперь пишут старое Sh?", uz: "Eski Sh endi qaysi harf bilan yoziladi?" },
+              explanation: { zh: "Sh → Ş，Ch → Ç，Oʻ → Ö，Gʻ → Ğ。", ru: "Sh → Ş, Ch → Ç, Oʻ → Ö, Gʻ → Ğ.", uz: "Sh → Ş, Ch → Ç, Oʻ → Ö, Gʻ → Ğ." },
+              options: [{ text: same("Ş"), correct: true }, { text: same("Ç") }, { text: same("S") }, { text: same("Ğ") }],
+            },
+            {
               type: "MULTIPLE_CHOICE", mascot: "panda", instruction: I.choose,
+              teach: { zh: "28 个字母里，元音有 6 个：\na, o, u, ö, i, e", ru: "Из 28 букв гласных 6:\na, o, u, ö, i, e", uz: "28 ta harfdan 6 tasi unli:\na, o, u, ö, i, e", en: "Of the 28 letters, 6 are vowels:\na, o, u, ö, i, e" },
               question: { zh: "乌兹别克语有几个元音？", ru: "Сколько в узбекском гласных?", uz: "Özbek tilida neçta unli bor?" },
               explanation: { zh: "6 个元音：a, o, u, ö, i, e。", ru: "6 гласных: a, o, u, ö, i, e.", uz: "6 ta unli: a, o, u, ö, i, e." },
               options: [{ text: same("6"), correct: true }, { text: same("5") }, { text: same("7") }, { text: same("24") }],
@@ -55,7 +65,15 @@ export const zhUzCourse: CourseContent = {
               options: [{ text: same("a, o, u"), correct: true }, { text: same("b, d, t") }, { text: same("a, b, u") }],
             },
             {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", instruction: I.choose,
+              teach: { zh: "其余的都是辅音：\n28 个字母减去 6 个元音，剩下 22 个辅音，比如 b, d, t。", ru: "Остальные буквы согласные:\n28 букв минус 6 гласных, остаётся 22 согласных, например b, d, t.", uz: "Qolgan harflar undoş:\n28 ta harfdan 6 ta unlini ayirsak, 22 ta undoş qoladi, masalan b, d, t.", en: "All the rest are consonants:\n28 letters minus 6 vowels leaves 22 consonants, like b, d, t." },
+              question: { zh: "乌兹别克语有几个辅音字母？", ru: "Сколько в узбекском алфавите согласных букв?", uz: "Özbek alifbosida neçta undoş harf bor?" },
+              explanation: { zh: "28 − 6 = 22：22 个辅音字母。", ru: "28 − 6 = 22: согласных букв 22.", uz: "28 − 6 = 22: 22 ta undoş harf." },
+              options: [{ text: same("22"), correct: true }, { text: same("24") }, { text: same("6") }, { text: same("28") }],
+            },
+            {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "a", speak: "a", instruction: I.choose,
+              teach: { zh: "A a：嘴张开，嘴唇舒展。\n和汉语的 a 很像。", ru: "A a: рот открыт, губы растянуты.\nПочти как китайское a.", uz: "A a: oğiz oçiq, lablar yoyiq.", en: "A a: mouth open, lips spread.\nVery close to Chinese a." },
               question: { zh: "发元音 A 时，嘴唇……", ru: "Как работают губы при звуке A?", uz: "A tovuşida lablar qanday böladi?" },
               explanation: { zh: "A 是舌前、低、展唇元音，和汉语单韵母 a 比较接近。", ru: "A — передний низкий нелабиализованный гласный, близок к китайскому a.", uz: "A — old qator, quyi keng, lablanmagan unli." },
               options: [
@@ -65,6 +83,7 @@ export const zhUzCourse: CourseContent = {
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "o", speak: "o", instruction: I.choose,
+              teach: { zh: "O o：舌头往后缩，嘴唇撮圆。", ru: "O o: язык отодвинут назад, губы округлены.", uz: "O o: til orqaga tortiladi, lablar dömboq.", en: "O o: tongue pulled back, lips rounded." },
               question: { zh: "O 是什么样的元音？", ru: "Какой это гласный — O?", uz: "O qanday unli?" },
               explanation: { zh: "O：舌后、低、圆唇。舌头后缩，下腭向下，双唇撮圆。", ru: "O: задний, низкий, губы округлены.", uz: "O: orqa qator, quyi keng, lablangan." },
               options: [
@@ -75,6 +94,7 @@ export const zhUzCourse: CourseContent = {
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "u", speak: "u", instruction: I.choose,
+              teach: { zh: "U u：像汉语的 u，\n但双唇再往前伸一点。", ru: "U u: как китайское u,\nно губы вытянуты вперёд ещё сильнее.", uz: "U u: xitoyça u ga öxşaydi,\nlekin lablar köproq oldinga çöziladi.", en: "U u: like Chinese u,\nbut push the lips further forward." },
               question: { zh: "关于 U，哪个说法正确？", ru: "Что верно про звук U?", uz: "U haqida qaysi gap töğri?" },
               explanation: { zh: "U 和汉语的 u 相似，但双唇要更向前伸出。", ru: "U похож на китайское u, но губы вытянуты вперёд сильнее.", uz: "U xitoyça u ga öxşaydi, lekin lablar oldinga köproq çöziladi." },
               options: [

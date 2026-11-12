@@ -1,6 +1,6 @@
 // Generates the course audio and writes src/content/audio-manifest.generated.ts:
 //  - phrases: every `speak`/`prompt` in the target language (Uzbek, Russian);
-//  - narration: each lesson's theory, read in Chinese and Uzbek. Words in
+//  - narration: each lesson's theory and step explanations (`teach`), read in Chinese and Uzbek. Words in
 //    other languages inside the text are read by that language's voice
 //    (e.g. Russian «а», «ма́ма» in a Chinese explanation).
 //
@@ -88,8 +88,8 @@ function phraseJobs() {
 function narrationJobs() {
   const jobs = new Map<string, Job & { key: string }>();
   for (const course of COURSES) for (const courseModule of course.modules) for (const lesson of courseModule.lessons) {
-    for (const locale of NARRATION_LOCALES) {
-      const text = lesson.theory[locale];
+    // The lesson's theory and the short step-by-step explanations before exercises.
+    for (const locale of NARRATION_LOCALES) for (const text of [lesson.theory[locale], ...lesson.exercises.map((exercise) => exercise.teach?.[locale])]) {
       if (!text) continue;
       const key = narrationKey(text);
       // Latin words are Uzbek in Uzbek texts and in the Uzbek course.

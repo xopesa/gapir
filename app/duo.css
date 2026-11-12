@@ -274,3 +274,8 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 /* An exercise question with recorded audio: tap to hear it again. */
 .duo-question-voice { display: inline; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; cursor: pointer; }
 .duo-question-voice svg { width: 1em; height: 1em; margin-left: 4px; vertical-align: -0.12em; color: var(--color-primary); }
+
+/* Step-by-step explanation before an exercise */
+.duo-teach { justify-content: center; min-height: 50vh; }
+.duo-teach-line { font-size: clamp(1.15rem, 5vw, 1.4rem); font-weight: 800; line-height: 1.4; }
+.duo-teach-num { padding: 0 6px; border-radius: 8px; background: var(--duo-gold, #ffc800); color: #3c2a00; font-size: 1.25em; font-weight: 900; }

@@ -8,11 +8,17 @@ export type ContentLocale = "zh" | "ru" | "uz" | "en";
 export type Text = Partial<Record<ContentLocale, string>> & { zh: string };
 export type Mascot = "panda" | "dragon" | "tiger";
 
-export type ExerciseContent =
+/**
+ * `teach`: a short explanation (one or two facts) the mascot gives — and reads
+ * aloud — right before this exercise, so the lesson teaches step by step
+ * instead of all theory up front.
+ */
+export type ExerciseContent = { teach?: Text } & (
   | { type: "MULTIPLE_CHOICE"; mascot?: Mascot; prompt?: string; speak?: string; instruction: Text; question: Text; explanation: Text; options: Array<{ text: Text; correct?: boolean; image?: string }> }
   | { type: "MATCHING"; mascot?: Mascot; instruction: Text; question: Text; explanation: Text; pairs: Array<{ left: string; right: string }> }
   | { type: "ARRANGE_WORDS"; mascot?: Mascot; prompt?: string; instruction: Text; question: Text; explanation: Text; words: string[]; correctWords: string[] }
-  | { type: "TRANSLATE"; mascot?: Mascot; prompt?: string; instruction: Text; question: Text; explanation: Text; acceptedAnswers: string[] };
+  | { type: "TRANSLATE"; mascot?: Mascot; prompt?: string; instruction: Text; question: Text; explanation: Text; acceptedAnswers: string[] }
+);
 
 export interface LessonContent {
   type: "VOCABULARY" | "GRAMMAR" | "CONVERSATION";

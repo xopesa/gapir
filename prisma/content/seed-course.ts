@@ -11,7 +11,7 @@ function pick(text: Text | undefined, locale: ContentLocale) {
 }
 
 function payloadOf(exercise: ExerciseContent) {
-  const display = { mascot: exercise.mascot, ...("prompt" in exercise && exercise.prompt ? { prompt: exercise.prompt } : {}) };
+  const display = { mascot: exercise.mascot, ...(exercise.teach ? { teach: exercise.teach } : {}), ...("prompt" in exercise && exercise.prompt ? { prompt: exercise.prompt } : {}) };
   switch (exercise.type) {
     case "MULTIPLE_CHOICE":
       return {

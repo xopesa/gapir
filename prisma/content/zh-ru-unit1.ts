@@ -30,22 +30,39 @@ export const zhRuCourse: CourseContent = {
         {
           type: "VOCABULARY", xpReward: 20, estimatedMinutes: 4,
           title: { zh: "俄语字母与元音 А · О · У · Э", ru: "Алфавит и гласные А · О · У · Э", uz: "Alifbo va А · О · У · Э unlilari", en: "Alphabet and vowels А · О · У · Э" },
-          description: { zh: "33 个字母和四个元音", ru: "33 буквы и четыре гласных", uz: "33 harf va törtta unli", en: "33 letters and four vowels" },
+          description: { zh: "33 个字母、10 个元音、21 个辅音", ru: "33 буквы, 10 гласных, 21 согласная", uz: "33 harf, 10 unli, 21 undoş", en: "33 letters, 10 vowels, 21 consonants" },
+          // Short intro: the facts come one by one, each right before its exercise (`teach`).
           theory: {
-            zh: "你好！我是熊猫 Paxta，这次陪你学俄语。\n俄语共有 33 个字母，每个字母都有印刷体和手写体，大多数有大写和小写两种形式。\n元音发音时声带振动，气流通过口腔基本不受任何阻碍。\n[а] — 口张大，舌自然平放。\n[о] — 双唇向前伸，圆撮成筒状，开口度比 [у] 大，舌后部向上抬起；发音时唇形和舌位保持不动。\n[у] — 双唇用力向前伸，圆撮成筒状，开口度小，舌后缩并向上腭抬起。\n[э] — 双唇向两边舒展，舌向前移并抬起。和汉语的“哎”相比，俄语的 [э] 是单元音。",
-            ru: "Привет! Я панда Paxta и помогу выучить русский.\nВ русском алфавите 33 буквы; у каждой есть печатная и рукописная форма.\nГласные произносятся с голосом, воздух проходит через рот свободно.\n[а] — рот широко открыт, язык лежит спокойно.\n[о] — губы вытянуты и округлены, но раскрыты шире, чем при [у].\n[у] — губы сильно вытянуты вперёд трубочкой, раствор маленький.\n[э] — губы растянуты, язык продвинут вперёд. В отличие от китайского «哎», [э] — один звук, не дифтонг.",
-            uz: "Salom! Men panda Paxtaman, rus tilini birga örganamiz.\nRus alifbosida 33 harf bor.\nUnlilar aytilganda havo oğizdan erkin çiqadi.\n[а] — oğiz keng oçiq.\n[о] — lablar oldinga çözilib dömboqlanadi, [у] dan kengroq.\n[у] — lablar kuçli oldinga çöziladi, teşik kiçik.\n[э] — lablar yoyiq, til oldinga suriladi; bu bitta unli, diftong emas.",
-            en: "Hi! I'm Paxta the panda and I'll learn Russian with you.\nThe Russian alphabet has 33 letters, each with a printed and a handwritten form.\nVowels are voiced and the air passes freely through the mouth.\n[а] — mouth wide open, tongue relaxed.\n[о] — lips rounded and pushed forward, opened wider than for [у].\n[у] — lips strongly pushed forward into a small tube.\n[э] — lips spread, tongue forward. Unlike Chinese 哎, [э] is a single vowel, not a diphthong.",
+            zh: "你好！我是熊猫 Paxta，这次陪你学俄语。\n今天一步一步记住三个数字：有几个字母，几个元音，几个辅音。然后学 [а], [у], [о], [э] 四个音。",
+            ru: "Привет! Я панда Paxta и помогу выучить русский.\nСегодня по шагам запомним три числа: сколько букв, сколько гласных и сколько согласных. Потом звуки [а], [у], [о], [э].",
+            uz: "Salom! Men panda Paxtaman, rus tilini birga örganamiz.\nBugun qadamma-qadam uçta sonni eslab qolamiz: neçta harf, neçta unli, neçta undoş. Keyin [а], [у], [о], [э] tovuşlari.",
+            en: "Hi! I'm Paxta the panda and I'll learn Russian with you.\nToday, step by step, we remember three numbers: how many letters, vowels and consonants. Then the sounds [а], [у], [о], [э].",
           },
           exercises: [
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", instruction: I.choose,
+              teach: { zh: "俄语用西里尔字母书写。\n一共有 33 个字母。", ru: "Русский пишется кириллицей.\nВ алфавите 33 буквы.", uz: "Rus tili kirill yozuvida.\nAlifboda 33 ta harf bor.", en: "Russian is written in Cyrillic.\nThe alphabet has 33 letters." },
               question: { zh: "俄语共有多少个字母？", ru: "Сколько букв в русском алфавите?", uz: "Rus alifbosida neçta harf bor?" },
-              explanation: { zh: "俄语共有 33 个字母。（乌兹别克语是 29 个）", ru: "33 буквы.", uz: "33 ta harf (özbek tilida — 29 ta)." },
-              options: [{ text: same("33"), correct: true }, { text: same("26") }, { text: same("29") }, { text: same("30") }],
+              explanation: { zh: "俄语共有 33 个字母。（乌兹别克语是 28 个）", ru: "33 буквы.", uz: "33 ta harf (özbek tilida 28 ta)." },
+              options: [{ text: same("33"), correct: true }, { text: same("26") }, { text: same("28") }, { text: same("30") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", instruction: I.choose,
+              teach: { zh: "33 个字母里，元音字母有 10 个：\nа, э, ы, о, у, я, е, ё, ю, и", ru: "Из 33 букв гласных 10:\nа, э, ы, о, у, я, е, ё, ю, и", uz: "33 ta harfdan 10 tasi unli:\nа, э, ы, о, у, я, е, ё, ю, и", en: "Of the 33 letters, 10 are vowels:\nа, э, ы, о, у, я, е, ё, ю, и" },
+              question: { zh: "俄语有几个元音字母？", ru: "Сколько в русском алфавите гласных букв?", uz: "Rus alifbosida neçta unli harf bor?" },
+              explanation: { zh: "10 个元音字母：а, э, ы, о, у, я, е, ё, ю, и。", ru: "10 гласных букв: а, э, ы, о, у, я, е, ё, ю, и.", uz: "10 ta unli harf: а, э, ы, о, у, я, е, ё, ю, и." },
+              options: [{ text: same("10"), correct: true }, { text: same("6") }, { text: same("5") }, { text: same("21") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", instruction: I.choose,
+              teach: { zh: "辅音字母有 21 个，比如 п, м, т。\n还有 2 个符号 ъ 和 ь，它们自己不发音。", ru: "Согласных букв 21, например п, м, т.\nЕщё 2 знака, ъ и ь: сами они звука не дают.", uz: "Undoş harflar 21 ta, masalan п, м, т.\nYana 2 belgi bor, ъ va ь: ular tovuş bildirmaydi.", en: "There are 21 consonants, like п, м, т.\nPlus 2 signs, ъ and ь, which have no sound of their own." },
+              question: { zh: "俄语有几个辅音字母？", ru: "Сколько в русском алфавите согласных букв?", uz: "Rus alifbosida neçta undoş harf bor?" },
+              explanation: { zh: "10 个元音 + 21 个辅音 + ъ, ь = 33 个字母。", ru: "10 гласных + 21 согласная + ъ, ь = 33 буквы.", uz: "10 unli + 21 undoş + ъ, ь = 33 harf." },
+              options: [{ text: same("21"), correct: true }, { text: same("22") }, { text: same("10") }, { text: same("33") }],
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "а", speak: "а", instruction: I.choose,
+              teach: { zh: "[а]：口张大，舌头自然平放。", ru: "[а]: рот широко открыт, язык лежит спокойно.", uz: "[а]: oğiz keng oçiq, til tinç yotadi.", en: "[а]: mouth wide open, tongue relaxed." },
               question: { zh: "发 [а] 时……", ru: "Как произносится [а]?", uz: "[а] qanday aytiladi?" },
               explanation: { zh: "[а]：口张大，舌自然平放。", ru: "Рот широко открыт, язык лежит спокойно.", uz: "Oğiz keng oçiq." },
               options: [
@@ -56,6 +73,7 @@ export const zhRuCourse: CourseContent = {
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "у", speak: "у", instruction: I.choose,
+              teach: { zh: "[у]：双唇用力向前伸，\n像一根小管子。", ru: "[у]: губы сильно вытянуты вперёд,\nмаленькой трубочкой.", uz: "[у]: lablar kuçli oldinga çöziladi,\nkiçik nayça kabi.", en: "[у]: lips pushed strongly forward\ninto a small tube." },
               question: { zh: "发 [у] 时……", ru: "Как произносится [у]?", uz: "[у] qanday aytiladi?" },
               explanation: { zh: "[у]：双唇用力向前伸，圆撮成筒状，开口度小。", ru: "Губы сильно вытянуты трубочкой, раствор маленький.", uz: "Lablar kuçli çöziladi, teşik kiçik." },
               options: [
@@ -66,6 +84,7 @@ export const zhRuCourse: CourseContent = {
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "о", speak: "о", instruction: I.choose,
+              teach: { zh: "[о]：双唇也撮圆，\n但嘴张得比 [у] 大。", ru: "[о]: губы тоже округлены,\nно рот открыт шире, чем при [у].", uz: "[о]: lablar ham dömboq,\nlekin oğiz [у] dan kengroq oçiladi.", en: "[о]: lips rounded too,\nbut the mouth is opened wider than for [у]." },
               question: { zh: "和 [у] 相比，发 [о] 时开口……", ru: "По сравнению с [у] при [о] рот…", uz: "[у] ga nisbatan [о] da oğiz …" },
               explanation: { zh: "[о] 的开口度比 [у] 大，伸出度比 [у] 小。", ru: "При [о] рот раскрыт шире, губы вытянуты меньше.", uz: "[о] da oğiz kengroq oçiladi." },
               options: [
@@ -76,6 +95,7 @@ export const zhRuCourse: CourseContent = {
             },
             {
               type: "MULTIPLE_CHOICE", mascot: "tiger", prompt: "э", speak: "э", instruction: I.choose,
+              teach: { zh: "[э]：双唇向两边舒展。\n它是一个音，不像汉语“哎”那样滑动。", ru: "[э]: губы растянуты.\nЭто один звук, он не скользит, как китайское «哎».", uz: "[э]: lablar yoyiq.\nBu bitta tovuş, diftong emas.", en: "[э]: lips spread.\nIt is one sound; it doesn't glide like Chinese 哎." },
               question: { zh: "和汉语的“哎”相比，俄语的 [э] 是……", ru: "В отличие от китайского «哎», [э] —", uz: "Xitoyça «哎» dan farqli, [э] —" },
               explanation: { zh: "俄语的 [э] 是单元音，发音时舌位和唇形不变。", ru: "[э] — монофтонг: положение языка и губ не меняется.", uz: "[э] — bitta unli." },
               options: [

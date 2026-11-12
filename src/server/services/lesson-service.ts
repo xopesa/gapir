@@ -84,6 +84,9 @@ export function toLessonView(lesson: LessonRecord, locale: string) {
       const text = localized(exercise.translations, locale, fallback);
       const safePayload: ExercisePayload = {};
       for (const field of DISPLAY_FIELDS) if (payload[field] !== undefined) safePayload[field] = payload[field];
+      // A step-by-step explanation shown before the exercise, in the learner's locale.
+      const teach = payload.teach as Record<string, string> | undefined;
+      if (teach && typeof teach === "object") safePayload.teach = teach[locale] ?? teach[fallback] ?? teach.zh;
       if (exercise.type === "ARRANGE_WORDS") safePayload.words = Array.isArray(payload.words) ? payload.words : [];
       if (exercise.type === "MATCHING" && Array.isArray(payload.pairs)) {
         safePayload.left = payload.pairs.map((pair) => (pair as { left: string }).left);
