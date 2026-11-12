@@ -6,6 +6,7 @@
 // No typing exercises yet: many phones in China have no Cyrillic keyboard.
 import { I, meaning, same, type CourseContent } from "./common";
 import { ruUnit2 } from "./zh-ru-unit2";
+import { ruUnit3 } from "./zh-ru-unit3";
 
 export const zhRuCourse: CourseContent = {
   slug: "zh-ru-a1",
@@ -455,5 +456,6 @@ export const zhRuCourse: CourseContent = {
       ],
     },
     ruUnit2,
+    ruUnit3,
   ],
 };
