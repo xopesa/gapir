@@ -279,3 +279,9 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 .duo-teach { justify-content: center; min-height: 50vh; }
 .duo-teach-line { font-size: clamp(1.15rem, 5vw, 1.4rem); font-weight: 800; line-height: 1.4; }
 .duo-teach-num { padding: 0 6px; border-radius: 8px; background: var(--duo-gold, #ffc800); color: #3c2a00; font-size: 1.25em; font-weight: 900; }
+
+/* Listening exercise: one big speaker, the text appears after the answer */
+.duo-listen { display: flex; align-items: center; gap: 14px; }
+.duo-listen-btn { display: grid; width: 72px; height: 72px; flex: 0 0 auto; place-items: center; border: 0; border-radius: 20px; background: var(--color-primary); color: #fff; cursor: pointer; box-shadow: 0 var(--duo-depth) 0 var(--color-primary-dark, #1846e8); }
+.duo-listen-btn svg { width: 40px; height: 40px; }
+.duo-listen-btn.is-playing { animation: duo-pulse .8s ease-in-out infinite; }

@@ -14,7 +14,7 @@ export type Mascot = "panda" | "dragon" | "tiger";
  * instead of all theory up front.
  */
 export type ExerciseContent = { teach?: Text } & (
-  | { type: "MULTIPLE_CHOICE"; mascot?: Mascot; prompt?: string; speak?: string; instruction: Text; question: Text; explanation: Text; options: Array<{ text: Text; correct?: boolean; image?: string }> }
+  | { type: "MULTIPLE_CHOICE"; mascot?: Mascot; prompt?: string; speak?: string; /** Audio only: hear `speak`, pick it (book: 听录音). */ listen?: boolean; instruction: Text; question: Text; explanation: Text; options: Array<{ text: Text; correct?: boolean; image?: string }> }
   | { type: "MATCHING"; mascot?: Mascot; instruction: Text; question: Text; explanation: Text; pairs: Array<{ left: string; right: string }> }
   | { type: "ARRANGE_WORDS"; mascot?: Mascot; prompt?: string; instruction: Text; question: Text; explanation: Text; words: string[]; correctWords: string[] }
   | { type: "TRANSLATE"; mascot?: Mascot; prompt?: string; instruction: Text; question: Text; explanation: Text; acceptedAnswers: string[] }
@@ -53,6 +53,8 @@ export const I = {
   match: { zh: "点击配对", ru: "Соедините пары", uz: "Juftlarni toping", en: "Tap the matching pairs" },
   build: { zh: "用单词组成句子", ru: "Составьте фразу из слов", uz: "Sözlardan gap tuzing", en: "Build the sentence" },
   type: { zh: "用乌兹别克语输入", ru: "Напишите по-узбекски", uz: "Özbekça yozing", en: "Type in Uzbek" },
+  listen: { zh: "听一听，选出你听到的", ru: "Послушайте и выберите, что слышите", uz: "Tinglang va eşitganingizni tanlang", en: "Listen and choose what you hear" },
+  gap: { zh: "选出缺少的字母", ru: "Выберите пропущенную букву", uz: "Tuşib qolgan harfni tanlang", en: "Choose the missing letter" },
   culture: { zh: "文化小知识", ru: "Культура", uz: "Madaniyat", en: "Culture" },
 } satisfies Record<string, Text>;
 

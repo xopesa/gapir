@@ -7,7 +7,7 @@ export { checkExerciseAnswer, exerciseSolution, normalizeText };
 export type { ExercisePayload };
 
 // Display-only payload fields that are safe to send to the browser (no answers).
-const DISPLAY_FIELDS = ["prompt", "speak", "mascot", "optionImages", "image"] as const;
+const DISPLAY_FIELDS = ["prompt", "speak", "listen", "mascot", "optionImages", "image"] as const;
 
 export function parsePayload(payload: string): ExercisePayload {
   try { return JSON.parse(payload) as ExercisePayload; } catch { return {}; }

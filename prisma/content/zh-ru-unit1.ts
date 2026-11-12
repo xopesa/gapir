@@ -116,6 +116,18 @@ export const zhRuCourse: CourseContent = {
               explanation: { zh: "а, о, у, э 是元音；п, м, т 是辅音。", ru: "а, о, у, э — гласные; п, м, т — согласные.", uz: "а, о, у, э — unlilar." },
               options: [{ text: same("а, о, у, э"), correct: true }, { text: same("п, м, т") }, { text: same("а, м, у") }],
             },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", listen: true, speak: "у", instruction: I.listen,
+              question: { zh: "你听到的是哪个元音？", ru: "Какой гласный вы услышали?", uz: "Qaysi unlini eşitdingiz?" },
+              explanation: { zh: "[у]：双唇用力向前伸，像小管子。", ru: "[у]: губы сильно вытянуты трубочкой.", uz: "[у]: lablar kuçli oldinga çöziladi." },
+              options: [{ text: same("у"), correct: true }, { text: same("о") }, { text: same("а") }, { text: same("э") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", listen: true, speak: "о", instruction: I.listen,
+              question: { zh: "你听到的是哪个元音？", ru: "Какой гласный вы услышали?", uz: "Qaysi unlini eşitdingiz?" },
+              explanation: { zh: "[о]：双唇撮圆，开口比 [у] 大。", ru: "[о]: губы округлены, рот шире, чем при [у].", uz: "[о]: lablar dömboq, oğiz [у] dan kengroq." },
+              options: [{ text: same("о"), correct: true }, { text: same("у") }, { text: same("а") }, { text: same("э") }],
+            },
           ],
         },
         // ── Lesson 2 ─────────────────────────────────────────────── 辅音 п м т
@@ -193,6 +205,30 @@ export const zhRuCourse: CourseContent = {
               explanation: { zh: "там — 那里；тут — 这里。", ru: "там — там (далеко); тут — здесь.", uz: "там — u yerda; тут — bu yerda." },
               options: [meaning("那里", "u yerda", "👉", true), meaning("这里", "bu yerda", "👇"), meaning("然后", "keyin")],
             },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "panda", listen: true, speak: "пу", instruction: I.listen,
+              question: { zh: "你听到的是哪个音节？", ru: "Какой слог вы услышали?", uz: "Qaysi böğinni eşitdingiz?" },
+              explanation: { zh: "пу：[п] + [у]。", ru: "пу: [п] + [у].", uz: "пу: [п] + [у]." },
+              options: [{ text: same("пу"), correct: true }, { text: same("па") }, { text: same("по") }, { text: same("пэ") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", listen: true, speak: "ом", instruction: I.listen,
+              question: { zh: "你听到的是哪个音节？", ru: "Какой слог вы услышали?", uz: "Qaysi böğinni eşitdingiz?" },
+              explanation: { zh: "ом：先元音 [о]，后闭唇 [м]。", ru: "ом: сначала [о], потом губы смыкаются на [м].", uz: "ом: avval [о], keyin [м]." },
+              options: [{ text: same("ом"), correct: true }, { text: same("ам") }, { text: same("ум") }, { text: same("эм") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", listen: true, speak: "том", instruction: I.listen,
+              question: { zh: "你听到的是哪个词？", ru: "Какое слово вы услышали?", uz: "Qaysi sözni eşitdingiz?" },
+              explanation: { zh: "том 和 мот：辅音的顺序不同。", ru: "том и мот: согласные в другом порядке.", uz: "том va мот: undoşlar tartibi boşqa." },
+              options: [{ text: same("том"), correct: true }, { text: same("мот") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "panda", listen: true, speak: "пут", instruction: I.listen,
+              question: { zh: "你听到的是哪个词？", ru: "Какое слово вы услышали?", uz: "Qaysi sözni eşitdingiz?" },
+              explanation: { zh: "пут 以 [п] 开头，туп 以 [т] 开头。", ru: "пут начинается с [п], туп с [т].", uz: "пут [п] bilan, туп [т] bilan boşlanadi." },
+              options: [{ text: same("пут"), correct: true }, { text: same("туп") }],
+            },
           ],
         },
         // ── Lesson 3 ─────────────────────────────────────────────── 音节，重音，а/о 弱化
@@ -269,6 +305,24 @@ export const zhRuCourse: CourseContent = {
               explanation: { zh: "поэ́т — 重音在 э 上。", ru: "поэ́т.", uz: "поэ́т." },
               options: [{ text: same("поэ́т"), correct: true }, { text: same("по́эт") }],
             },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", prompt: "т_мат", speak: "тома́т", instruction: I.gap,
+              question: { zh: "番茄 т_мат：缺的是哪个字母？", ru: "т_мат (помидор): какая буква пропущена?", uz: "т_мат (pomidor): qaysi harf tuşib qolgan?" },
+              explanation: { zh: "写 о，但在重音前读得像 а：томáт。", ru: "Пишется о, но перед ударением звучит как а: тома́т.", uz: "о yoziladi, lekin urğudan oldin а kabi eşitiladi: тома́т." },
+              options: [{ text: same("о"), correct: true }, { text: same("а") }, { text: same("у") }, { text: same("э") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "п_эт", speak: "поэ́т", instruction: I.gap,
+              question: { zh: "诗人 п_эт：缺的是哪个字母？", ru: "п_эт (поэт): какая буква пропущена?", uz: "п_эт (şoir): qaysi harf tuşib qolgan?" },
+              explanation: { zh: "поэ́т：写 о，读得短而弱。", ru: "поэ́т: пишется о, звучит слабо и коротко.", uz: "поэ́т: о yoziladi, qisqa eşitiladi." },
+              options: [{ text: same("о"), correct: true }, { text: same("а") }, { text: same("у") }, { text: same("э") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", prompt: "Эмм_", speak: "Э́мма", instruction: I.gap,
+              question: { zh: "爱玛 Эмм_：缺的是哪个字母？", ru: "Эмм_ (имя): какая буква пропущена?", uz: "Эмм_ (ism): qaysi harf tuşib qolgan?" },
+              explanation: { zh: "Э́мма：词末是 а，读成含糊的 [ъ]。", ru: "Э́мма: на конце а, звучит неясно.", uz: "Э́мма: oxirida а." },
+              options: [{ text: same("а"), correct: true }, { text: same("о") }, { text: same("у") }, { text: same("э") }],
+            },
           ],
         },
         // ── Lesson 4 ─────────────────────────────────────────────── 调型1，句型
@@ -339,6 +393,18 @@ export const zhRuCourse: CourseContent = {
               explanation: { zh: "Па́па там.", ru: "Па́па там.", uz: "Па́па там." },
               options: [{ text: same("Па́па там."), correct: true }, { text: same("Па́па тут.") }, { text: same("Э́то па́па.") }],
             },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "panda", prompt: "Э́то ма́ма.", speak: "Э́то ма́ма.", instruction: I.choose,
+              question: { zh: "调型1的调心在哪个词上？", ru: "На каком слове центр ИК-1?", uz: "1-ohang markazi qaysi sözda?" },
+              explanation: { zh: "调心在 ма́ма 的重读音节上，声音在这里下降。", ru: "Центр на ма́ма: на ударном слоге голос понижается.", uz: "Markaz ма́ма sözida: ovoz pasayadi." },
+              options: [{ text: same("ма́ма"), correct: true }, { text: same("э́то") }],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "tiger", listen: true, speak: "Па́па тут.", instruction: I.listen,
+              question: { zh: "你听到的是哪句话？", ru: "Какую фразу вы услышали?", uz: "Qaysi gapni eşitdingiz?" },
+              explanation: { zh: "Па́па тут. 爸爸在这里。", ru: "Па́па тут. — Папа здесь.", uz: "Па́па тут. — Dada bu yerda." },
+              options: [{ text: same("Па́па тут."), correct: true }, { text: same("Па́па там.") }, { text: same("Ма́ма тут.") }],
+            },
           ],
         },
         // ── Lesson 5 ─────────────────────────────────────────────── 对话、课文、生词
@@ -400,6 +466,12 @@ export const zhRuCourse: CourseContent = {
               question: { zh: "这个词是什么意思？", ru: "Что значит это слово?", uz: "Bu söz nimani anglatadi?" },
               explanation: { zh: "ум — 智慧，智力。", ru: "ум — разум.", uz: "ум — aql." },
               options: [meaning("智慧", "aql", "🧠", true), meaning("番茄", "pomidor", "🍅"), meaning("从……", "…dan")],
+            },
+            {
+              type: "MULTIPLE_CHOICE", mascot: "dragon", listen: true, speak: "А э́то Э́мма.", instruction: I.listen,
+              question: { zh: "你听到的是哪句话？", ru: "Какую фразу вы услышали?", uz: "Qaysi gapni eşitdingiz?" },
+              explanation: { zh: "А э́то Э́мма. 而这是爱玛。", ru: "А э́то Э́мма. — А это Эмма.", uz: "А э́то Э́мма. — Bu esa Emma." },
+              options: [{ text: same("А э́то Э́мма."), correct: true }, { text: same("Э́то Э́мма.") }, { text: same("А э́то ма́ма.") }],
             },
           ],
         },

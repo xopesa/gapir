@@ -17,6 +17,7 @@ function payloadOf(exercise: ExerciseContent) {
       return {
         ...display,
         ...(exercise.speak ? { speak: exercise.speak } : {}),
+        ...(exercise.listen ? { listen: true } : {}),
         ...(exercise.options.some((option) => option.image) ? { optionImages: exercise.options.map((option) => option.image ?? null) } : {}),
       };
     case "MATCHING":

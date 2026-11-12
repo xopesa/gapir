@@ -21,7 +21,7 @@ type ExerciseType = "MULTIPLE_CHOICE" | "ARRANGE_WORDS" | "MATCHING" | "TRANSLAT
 interface ExerciseView {
   id: string; type: ExerciseType;
   instruction: string; question: string; xpReward: number;
-  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null>; teach?: string };
+  payload: { words?: string[]; left?: string[]; right?: string[]; prompt?: string; speak?: string; mascot?: MascotKind; optionImages?: Array<string | null>; teach?: string; listen?: boolean };
   options: { id: string; text: string }[];
 }
 
@@ -159,6 +159,15 @@ function PromptCard({ text, speak, speakLabel, lang }: { text: string; speak?: s
   return <div className="duo-prompt" lang={lang}>
     {speech.available && <button type="button" className={`duo-speaker${speech.playing ? " is-playing" : ""}`} aria-label={speakLabel} onClick={() => speech.play()}><SpeakerHigh weight="fill" /></button>}
     <span className="duo-prompt-text">{text}</span>
+  </div>;
+}
+
+/** Listening (book: 听录音): only a big speaker; the text shows after the answer. */
+function ListenCard({ speak, label, lang, reveal }: { speak: string; label: string; lang: string; reveal: boolean }) {
+  const speech = useSpeech(speak, lang);
+  return <div className="duo-listen" lang={lang}>
+    <button type="button" className={`duo-listen-btn${speech.playing ? " is-playing" : ""}`} aria-label={label} onClick={() => speech.play()}><SpeakerHigh weight="fill" /></button>
+    {reveal && <span className="duo-prompt-text">{speak}</span>}
   </div>;
 }
 
@@ -460,7 +469,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
           {reviewing && <p className="duo-review-tag"><ArrowCounterClockwise weight="bold" /> {t.reviewMistakes}</p>}
           <h1 className="duo-instruction">{exercise.instruction}</h1>
           <Bubble mascot={mascot} mood={feedback ? (feedback.isCorrect ? "happy" : "sad") : "idle"}>
-            {prompt && <PromptCard key={exercise.id} text={prompt} speak={exercise.payload.speak} speakLabel={t.listen} lang={lang} />}
+            {exercise.payload.listen && exercise.payload.speak
+              ? <ListenCard key={exercise.id} speak={exercise.payload.speak} label={t.listen} lang={lang} reveal={Boolean(feedback)} />
+              : prompt && <PromptCard key={exercise.id} text={prompt} speak={exercise.payload.speak} speakLabel={t.listen} lang={lang} />}
             {replayQuestion
               ? <button type="button" className="duo-question duo-question-voice" onClick={replayQuestion} aria-label={t.listen}>{exercise.question} <SpeakerHigh weight="fill" /></button>
               : <span className="duo-question">{exercise.question}</span>}
