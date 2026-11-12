@@ -29,7 +29,9 @@ async function warmCache(pack: Pack) {
   if (!page?.ok) return;
   const html = await page.clone().text();
   await cache.put("/offline", page);
-  const assets = new Set<string>(["/gapir-logo.png", ...packAudio(pack)]);
+  // Interface sounds too, so answers still click and chime without a network.
+  const sounds = ["button-tap", "correct-answer", "wrong-answer", "lesson-complete", "xp-reward"].map((name) => `/sounds/${name}.mp3`);
+  const assets = new Set<string>(["/gapir-logo.png", ...sounds, ...packAudio(pack)]);
   for (const match of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+)"/g)) assets.add(match[1]);
   await Promise.all([...assets].map(async (url) => {
     if (await cache.match(url)) return;

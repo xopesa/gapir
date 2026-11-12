@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Mascot, type MascotKind, type MascotMood } from "@/src/components/mascots/mascot";
 import type { AppDictionary } from "@/src/types/app";
 import { playSound } from "@/src/lib/sound/sound-manager";
+import { haptic } from "@/src/lib/haptics";
 import { useSoundSettings } from "@/src/lib/sound/use-sound-settings";
 import type { SoundSettings } from "@/src/lib/sound/sound-types";
 import { applyTheme } from "@/src/lib/theme/theme-manager";
@@ -34,9 +35,6 @@ type Feedback = { isCorrect: boolean; explanation: string; solution?: string; pr
 const MAX_HEARTS = 5;
 const MASCOT_CYCLE: MascotKind[] = ["panda", "dragon", "tiger"];
 
-function vibrate(pattern: number | number[]) {
-  try { navigator.vibrate?.(pattern); } catch { /* unsupported */ }
-}
 
 function isAnswerReady(exercise: ExerciseView, answer: Answer) {
   if (answer === null) return false;
@@ -59,7 +57,7 @@ function ChoiceControl({ exercise, answer, locked, onAnswer }: { exercise: Exerc
     {exercise.options.map((option, index) => <button
       type="button" role="radio" aria-checked={answer === option.id} key={option.id}
       className={`duo-tile${answer === option.id ? " is-selected" : ""}`} disabled={locked}
-      onClick={() => { onAnswer(option.id); playSound("buttonTap"); }}
+      onClick={() => { onAnswer(option.id); playSound("buttonTap"); haptic("tap"); }}
     >
       {withImages && <span className="duo-tile-image" aria-hidden="true">{images?.[index] ?? "❔"}</span>}
       {!withImages && <span className="duo-tile-key" aria-hidden="true">{index + 1}</span>}
@@ -73,7 +71,7 @@ function ArrangeControl({ exercise, locked, onAnswer, clearLabel }: { exercise: 
   // Track chosen tiles by bank index so repeated words stay distinct.
   // The control remounts for every exercise (keyed section), so state starts empty.
   const [picked, setPicked] = useState<number[]>([]);
-  const update = (next: number[]) => { setPicked(next); onAnswer(next.map((index) => words[index])); playSound("buttonTap"); };
+  const update = (next: number[]) => { setPicked(next); onAnswer(next.map((index) => words[index])); playSound("buttonTap"); haptic("tap"); };
   return <div className="duo-arrange">
     <div className="duo-answer-line" aria-live="polite">
       {picked.map((wordIndex, position) => <motion.button layout layoutId={`w-${exercise.id}-${wordIndex}`} type="button" key={wordIndex} className="duo-word" disabled={locked} onClick={() => update(picked.filter((_, i) => i !== position))}>{words[wordIndex]}</motion.button>)}
@@ -103,7 +101,7 @@ function MatchControl({ exercise, answer, locked, onAnswer }: { exercise: Exerci
     next[l] = r;
     onAnswer(next);
     setActiveLeft(null); setActiveRight(null);
-    playSound("buttonTap");
+    playSound("buttonTap"); haptic("tap");
   };
   const tap = (side: "left" | "right", value: string) => {
     const existing = pairIndex(side, value);
@@ -171,7 +169,7 @@ function SpeakControl({ locked, lang, onSubmit, labels }: { locked: boolean; lan
 
   const listenNative = async (native: NativeSpeech) => {
     setFailed(false); setHeard(""); setListening(true);
-    playSound("buttonTap");
+    playSound("buttonTap"); haptic("listen");
     try {
       if (!(await native.available()).available) throw new Error("unavailable");
       if ((await native.requestPermissions()).speechRecognition !== "granted") throw new Error("denied");
@@ -205,7 +203,7 @@ function SpeakControl({ locked, lang, onSubmit, labels }: { locked: boolean; lan
     recognition.onend = () => { setListening(false); active.current = null; if (!got) setFailed(true); };
     active.current = recognition;
     setFailed(false); setHeard(""); setListening(true);
-    playSound("buttonTap");
+    playSound("buttonTap"); haptic("listen");
     try { recognition.start(); } catch { setListening(false); setFailed(true); }
   };
 
@@ -385,10 +383,10 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     const firstTry = !attempted.has(exercise.id);
     setAttempted((values) => new Set(values).add(exercise.id));
     if (payload.isCorrect) {
-      playSound("correctAnswer"); vibrate(15);
+      playSound("correctAnswer"); haptic("correct");
       if (firstTry) setFirstTryCorrect((value) => value + 1);
     } else {
-      playSound("wrongAnswer"); vibrate([30, 40, 30]);
+      playSound("wrongAnswer"); haptic("wrong");
       // A misheard phrase is not a mistake worth a heart: it only comes back later.
       if (!exercise.payload.say) setHearts((value) => Math.max(0, value - 1));
     }
@@ -415,8 +413,9 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     const earnedXp = payload.alreadyCompleted ? 0 : payload.earnedXp;
     setResult({ earnedXp, seconds: Math.max(1, Math.round((Date.now() - startedAt) / 1000)) });
     setPhase("done");
-    playSound("lessonComplete");
-    if (earnedXp > 0) window.setTimeout(() => playSound("xpReward"), 320);
+    playSound("lessonComplete"); haptic("complete");
+    // After the fanfare, not on top of it.
+    if (earnedXp > 0) window.setTimeout(() => playSound("xpReward"), 1300);
   }, [lesson.id, lesson.xpReward, localMode, offlinePack, startedAt]);
 
   const proceed = useCallback(() => {
@@ -425,7 +424,7 @@ export function LessonPlayer({ lesson, dictionary, soundSettings, theme, offline
     let nextQueue = rest;
     if (feedback.isCorrect) setSolved((values) => new Set(values).add(exercise.id));
     else nextQueue = [...rest, current]; // wrong answers come back at the end
-    if (!feedback.isCorrect && hearts <= 0) { setFeedback(null); setPhase("hearts"); return; }
+    if (!feedback.isCorrect && hearts <= 0) { setFeedback(null); setPhase("hearts"); haptic("fail"); return; }
     const onlyReviewLeft = nextQueue.length > 0 && nextQueue.every((index) => attempted.has(lesson.exercises[index].id));
     setReviewing(onlyReviewLeft);
     setQueue(nextQueue); setAnswer(null); setFeedback(null);

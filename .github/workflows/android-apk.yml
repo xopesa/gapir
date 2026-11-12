@@ -52,16 +52,16 @@ jobs:
           cp mobile/icon-background.png assets/icon-background.png
           npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#fdf5ec" --splashBackgroundColorDark "#19181d"
           npx cap sync android
-          # Speaking exercises: the microphone, and the phone's speech service (Android 11+ needs the query).
+          # Speaking exercises: the microphone and the phone speech service (Android 11+ needs the query); vibration feedback.
           python3 - <<'PY'
           import re
           path = "android/app/src/main/AndroidManifest.xml"
           text = open(path, encoding="utf-8").read()
           if "RECORD_AUDIO" not in text:
-              text = text.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application', 1)
+              text = text.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application', 1)
               open(path, "w", encoding="utf-8").write(text)
           PY
-          grep -n "RECORD_AUDIO\|RecognitionService" android/app/src/main/AndroidManifest.xml
+          grep -n "RECORD_AUDIO\|VIBRATE\|RecognitionService" android/app/src/main/AndroidManifest.xml
           # The app's version = the site's version it was built from (package.json).
           VERSION=$(node -p "require('./package.json').version")
           CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
