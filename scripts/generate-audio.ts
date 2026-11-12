@@ -58,7 +58,8 @@ function segments(text: string, latinVoice: Voice): Segment[] {
     else runs.push({ voice, text: char });
   }
   return runs
-    .map((run) => ({ voice: run.voice, text: forVoice(run.voice, run.text).replace(/^[\s,，、.。:：;；]+/, "").trim() }))
+    // "Кто это?, Это мама." (a dash turned into a comma) gets no audio from the voice.
+    .map((run) => ({ voice: run.voice, text: forVoice(run.voice, run.text).replace(/([?!.。？！])\s*[,，]/g, "$1").replace(/^[\s,，、.。:：;；]+/, "").trim() }))
     .filter((run) => /[\p{L}\p{N}]/u.test(run.text.replace(/[ʼʻ]/g, "")))
     .map((run) => ({ voice: VOICES[run.voice], text: run.text, rate: run.voice === "ru" ? "-15%" : "-5%" }));
 }
@@ -98,7 +99,8 @@ function narrationJobs() {
       const merged: Segment[] = [];
       for (const part of parts) {
         const last = merged[merged.length - 1];
-        if (last && last.voice === part.voice) last.text += `\n${part.text}`;
+        // The Russian voice returns nothing for "Пока!\nКак дела?": join its lines with a space.
+        if (last && last.voice === part.voice) last.text += part.voice === VOICES.ru ? ` ${part.text}` : `\n${part.text}`;
         else merged.push({ ...part });
       }
       jobs.set(key, { key, out: resolve(PUBLIC, "audio", "narration", locale, `${key}.mp3`), url: `/audio/narration/${locale}/${key}.mp3`, segments: merged });
