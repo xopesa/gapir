@@ -1,4 +1,5 @@
 import type { CapacitorConfig } from "@capacitor/cli";
+import pkg from "./package.json";
 
 // The Android app is a shell around the deployed site (Cloudflare Workers):
 // lessons, XP and accounts live on the server. Offline it keeps working through
@@ -16,7 +17,8 @@ const config: CapacitorConfig = {
     // Shown only if the very first launch has no network (nothing cached yet).
     errorPath: "offline.html",
   },
-  android: { appendUserAgent: "GapirApp" },
+  // The shell reports the version it was built from; the profile page shows it.
+  android: { appendUserAgent: `GapirApp/${pkg.version}` },
 };
 
 export default config;

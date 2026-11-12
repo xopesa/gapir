@@ -371,3 +371,15 @@ button.duo-unit-cta { background: none; font: inherit; cursor: pointer; }
 .duo-mic.is-listening { background: var(--gx-lilac); box-shadow: 0 6px 0 color-mix(in srgb, var(--gx-lilac) 70%, #000), 0 0 0 10px color-mix(in srgb, var(--gx-lilac) 22%, transparent); animation: duo-pulse .9s ease-in-out infinite; }
 .duo-speak-hint { margin: 0; font-size: 1.05rem; font-weight: 700; text-align: center; color: var(--color-text-secondary); }
 .duo-speak-done { max-width: 320px; }
+
+/* ── Practice: finished lessons to repeat ── */
+.practice-list { display: grid; gap: 10px; margin-top: 14px; }
+.practice-row { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 2px solid var(--gx-locked); border-radius: 20px; background: var(--color-surface, #fff); color: inherit; text-decoration: none; }
+.practice-row-icon { display: grid; width: 44px; height: 44px; flex: 0 0 auto; place-items: center; border-radius: 14px; background: color-mix(in srgb, var(--gx-lilac) 18%, transparent); color: var(--gx-lilac); }
+.practice-row-icon svg { width: 22px; height: 22px; }
+.practice-row-copy { display: grid; min-width: 0; flex: 1; gap: 2px; }
+.practice-row-copy small { color: var(--color-text-secondary); font-size: .72rem; font-weight: 700; }
+.practice-row-copy strong { overflow: hidden; font-size: .98rem; text-overflow: ellipsis; white-space: nowrap; }
+.practice-row-go { flex: 0 0 auto; color: var(--color-primary); font-size: .85rem; font-weight: 800; }
+.practice-feature a.button { display: inline-flex; align-items: center; gap: 8px; margin-top: 24px; text-decoration: none; }
+.version-note { margin: 4px 0 0; color: var(--color-text-secondary); font-size: .78rem; text-align: center; }

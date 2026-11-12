@@ -33,14 +33,15 @@ export const ru = {
     sourceLanguage: "Язык объяснения", dailyGoal: "Дневная цель", minutes: "минут",
     start: "Начать обучение",
   },
+  practice: { title: "Повторение", subtitle: "Повторяйте пройденные уроки, чтобы слова и звуки не забывались.", repeatLast: "Последний пройденный урок", startFirst: "С чего начать", repeat: "Повторить", noXp: "За повторение XP не начисляется, зато слова запоминаются надолго.", emptyText: "Пройдите первый урок, и он появится здесь для повторения.", completedTitle: "Пройденные уроки" },
   learning: {
-    lessonsLabel: "Уроки", minutesLabel: "Минуты", greeting: "Салом", subtitle: "Ещё один маленький шаг — и новый язык станет ближе.",
+    reminderTitle: "Маленький шаг каждый день", reminderText: "Одного короткого урока сегодня достаточно, чтобы серия продолжилась.", notifications: "Уведомления", lessonsLabel: "Уроки", minutesLabel: "Минуты", greeting: "Салом", subtitle: "Ещё один маленький шаг — и новый язык станет ближе.",
     section: "Ваш маршрут", continue: "Продолжить обучение", empty: "Опубликованных уроков пока нет.",
     progress: "Прогресс курса", lesson: "Урок", available: "Доступен", inProgress: "В процессе",
     completed: "Завершён", locked: "Закрыт", minutes: "мин",
   },
   profile: {
-    title: "Профиль", level: "Уровень", currentStreak: "текущий стрик", longestStreak: "лучший стрик",
+    version: "версия сайта", appVersion: "приложение", title: "Профиль", level: "Уровень", currentStreak: "текущий стрик", longestStreak: "лучший стрик",
     lessons: "уроков завершено", totalXp: "XP всего", preferences: "Настройки обучения",
     notifications: "Напоминания", timezone: "Часовой пояс",
   },

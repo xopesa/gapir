@@ -17,14 +17,13 @@ export function MobileHeader({ user, dictionary }: { user: AppUser; dictionary: 
         <span><Fire weight="fill" className="gx-fire" /> {user.streak} <Lightning weight="fill" className="gx-bolt" /> {user.xp} XP</span>
       </div>
       <div className="notification-wrap">
-        <button type="button" className="gx-bell" aria-label="Уведомления" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+        <button type="button" className="gx-bell" aria-label={dictionary.learning.notifications} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
           <Bell weight="bold" />
-          <span className="notification-dot" />
         </button>
         {open && (
           <div className="notification-popover" role="status">
-            <strong>Пора закрепить серию</strong>
-            <p>Сегодня достаточно одного короткого урока.</p>
+            <strong>{dictionary.learning.reminderTitle}</strong>
+            <p>{dictionary.learning.reminderText}</p>
           </div>
         )}
       </div>

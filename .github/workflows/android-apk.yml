@@ -10,6 +10,7 @@ on:
       - "mobile/**"
       - ".github/workflows/android-apk.yml"
       - "public/gapir-logo.png"
+      - "package.json"
 
 permissions:
   contents: read
@@ -51,16 +52,22 @@ jobs:
           cp mobile/icon-background.png assets/icon-background.png
           npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#f8fbff" --splashBackgroundColorDark "#0b1020"
           npx cap sync android
+          # The app's version = the site's version it was built from (package.json).
+          VERSION=$(node -p "require('./package.json').version")
+          CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/; s/versionCode [0-9]*/versionCode $CODE/" android/app/build.gradle
+          grep -n "versionName\|versionCode" android/app/build.gradle
+          echo "GAPIR_VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Build the APK
         working-directory: android
         run: |
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
-          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Gapir.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Gapir-v$GAPIR_VERSION.apk"
 
       - uses: actions/upload-artifact@v4
         with:
           name: gapir-apk
-          path: Gapir.apk
+          path: Gapir-v*.apk
           retention-days: 30
