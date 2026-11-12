@@ -142,20 +142,51 @@ function recognitionClass() {
   return scope.SpeechRecognition ?? scope.webkitSpeechRecognition ?? null;
 }
 
+// The Android app has no browser speech recognition: there the native plugin
+// (@capacitor-community/speech-recognition, built into the shell from 1.2.0) listens.
+type NativeSpeech = {
+  available: () => Promise<{ available: boolean }>;
+  requestPermissions: () => Promise<{ speechRecognition: string }>;
+  start: (options: { language: string; maxResults: number; partialResults: boolean; popup: boolean }) => Promise<{ matches?: string[] }>;
+};
+
+function nativeSpeech(): NativeSpeech | null {
+  if (typeof window === "undefined") return null;
+  const scope = window as unknown as { Capacitor?: { Plugins?: { SpeechRecognition?: NativeSpeech } } };
+  return scope.Capacitor?.Plugins?.SpeechRecognition ?? null;
+}
+
 /**
- * Speaking (book: 跟读): the learner says the phrase into the microphone and the
- * browser's speech recognition hears it. Where there is none (the Android app's
- * web view, Firefox) the learner repeats aloud and confirms.
+ * Speaking (book: 跟读): the learner says the phrase into the microphone and
+ * speech recognition hears it — the browser's, or the Android app's own. Where
+ * there is none (an old app build, Firefox) the learner repeats aloud and confirms.
  */
 function SpeakControl({ locked, lang, onSubmit, labels }: { locked: boolean; lang: string; onSubmit: (value: string | string[]) => void; labels: { tap: string; listening: string; heard: string; skip: string; repeat: string; done: string } }) {
-  const [supported] = useState(() => Boolean(recognitionClass()));
+  const [supported] = useState(() => Boolean(recognitionClass() || nativeSpeech()));
   const [listening, setListening] = useState(false);
   const [heard, setHeard] = useState("");
   const [failed, setFailed] = useState(false);
   const active = useRef<Recognition | null>(null);
   useEffect(() => () => active.current?.abort(), []);
 
+  const listenNative = async (native: NativeSpeech) => {
+    setFailed(false); setHeard(""); setListening(true);
+    playSound("buttonTap");
+    try {
+      if (!(await native.available()).available) throw new Error("unavailable");
+      if ((await native.requestPermissions()).speechRecognition !== "granted") throw new Error("denied");
+      const { matches } = await native.start({ language: SPEECH_LOCALES[lang] ?? lang, maxResults: 5, partialResults: false, popup: false });
+      const alternatives = (matches ?? []).map((item) => item.trim()).filter(Boolean);
+      if (!alternatives.length) throw new Error("silence");
+      setHeard(alternatives[0]);
+      onSubmit(alternatives);
+    } catch { setFailed(true); }
+    setListening(false);
+  };
+
   const listen = () => {
+    const native = nativeSpeech();
+    if (native) { if (!listening && !locked) void listenNative(native); return; }
     const Recognizer = recognitionClass();
     if (!Recognizer || listening || locked) return;
     const recognition = new Recognizer();

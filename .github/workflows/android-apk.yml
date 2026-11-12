@@ -50,8 +50,18 @@ jobs:
           # A background image (not a colour): the colour option leaves the
           # adaptive icon pointing at a missing mipmap/ic_launcher_background.
           cp mobile/icon-background.png assets/icon-background.png
-          npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#f8fbff" --splashBackgroundColorDark "#0b1020"
+          npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#fdf5ec" --splashBackgroundColorDark "#19181d"
           npx cap sync android
+          # Speaking exercises: the microphone, and the phone's speech service (Android 11+ needs the query).
+          python3 - <<'PY'
+          import re
+          path = "android/app/src/main/AndroidManifest.xml"
+          text = open(path, encoding="utf-8").read()
+          if "RECORD_AUDIO" not in text:
+              text = text.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application', 1)
+              open(path, "w", encoding="utf-8").write(text)
+          PY
+          grep -n "RECORD_AUDIO\|RecognitionService" android/app/src/main/AndroidManifest.xml
           # The app's version = the site's version it was built from (package.json).
           VERSION=$(node -p "require('./package.json').version")
           CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
