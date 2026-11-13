@@ -5,10 +5,11 @@ import { ArrowRight, BookOpen, CheckCircle, Eye, EyeSlash, LockKey, User } from 
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { LocaleSwitcher, usePublicLocale } from "@/src/components/i18n/locale-switcher";
+import { Mascot } from "@/src/components/mascots/mascot";
 import { ThemeSwitcher } from "@/src/components/theme/theme-switcher";
 import { Button } from "@/src/components/ui";
 import { getDictionary } from "@/src/i18n/config";
@@ -19,12 +20,51 @@ function AuthFrame({ children }: { children: React.ReactNode }) {
     <main className="login-shell">
       <section className="login-brand-panel" aria-label="Gapir">
         <div className="login-brand"><span className="login-logo"><Image src="/gapir-logo.png" alt="Gapir" width={96} height={96} priority unoptimized className="brand-logo-image" /></span><strong>Gapir</strong></div>
-        <div className="login-promise"><span className="login-kicker"><BookOpen weight="fill" /> Gapir</span><h1>Til — yangi imkoniyatlar eshigi.</h1><p>Короткие уроки, реальный прогресс и четыре языка интерфейса.</p></div>
+        <div className="login-promise"><span className="login-kicker"><BookOpen weight="fill" /> Gapir</span><h1>Til — yangi imkoniyatlar eşigi.</h1><p>Короткие уроки, реальный прогресс и четыре языка интерфейса.</p></div>
         <div className="login-proof"><span><CheckCircle weight="fill" /> 5 минут в день</span><span><CheckCircle weight="fill" /> Прогресс в аккаунте</span></div>
       </section>
       <section className="login-form-panel">{children}</section>
     </main>
   );
+}
+
+function safeReturnTo(value: string | null) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : null;
+}
+
+/** "Start without an account": creates a guest session at once, then onboarding. */
+export function StartPageClient() {
+  const router = useRouter();
+  const search = useSearchParams();
+  const { locale } = usePublicLocale("zh");
+  const dictionary = getDictionary(locale);
+  const [failed, setFailed] = useState(false);
+  const started = useRef(false);
+  const start = useCallback(async () => {
+    setFailed(false);
+    const response = await fetch("/api/auth/guest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale }) }).catch(() => null);
+    if (!response?.ok) {
+      // No network on the very first launch: the app's offline screen explains what to do.
+      if (!response && typeof navigator !== "undefined" && !navigator.onLine) { window.location.replace("/offline"); return; }
+      setFailed(true); return;
+    }
+    const returnTo = safeReturnTo(search.get("returnTo"));
+    router.replace(returnTo && returnTo !== "/" ? returnTo : "/onboarding");
+    router.refresh();
+  }, [locale, router, search]);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void start();
+  }, [start]);
+  return <main className="guest-start">
+    <Mascot kind="panda" mood={failed ? "sad" : "happy"} size={132} />
+    <h1>Gapir</h1>
+    <p>{failed ? dictionary.common.error : dictionary.offline.starting}</p>
+    {failed && <Button type="button" size="lg" onClick={() => void start()}>{dictionary.offline.retry}</Button>}
+    <p className="guest-start-hint">{dictionary.offline.startHint}</p>
+    <Link href="/login">{dictionary.offline.haveAccount}</Link>
+  </main>;
 }
 
 type LoginValues = z.infer<typeof loginSchema>;
@@ -54,7 +94,7 @@ export function LoginPageClient() {
       <Button type="submit" size="lg" loading={form.formState.isSubmitting}>{dictionary.auth.login} <ArrowRight weight="bold" /></Button>
     </form>
     <p className="auth-switch">{dictionary.auth.noAccount} <Link href="/register">{dictionary.auth.register}</Link></p>
-    <div className="test-credentials"><span>OWNER</span><div><strong>Email</strong><code>test@gapir.local</code></div><div><strong>Password</strong><code>2804meili</code></div></div>
+    <Link className="guest-start-link" href={`/start${search.get("returnTo") ? `?returnTo=${encodeURIComponent(search.get("returnTo") ?? "/")}` : ""}`}>{dictionary.offline.start} <ArrowRight weight="bold" /></Link>
   </div></AuthFrame>;
 }
 

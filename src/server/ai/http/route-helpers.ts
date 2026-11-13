@@ -16,5 +16,7 @@ export function aiRouteErrorResponse(error: unknown, requestId: string) {
   if (error instanceof ZodError) {
     return Response.json({ error: { code: "VALIDATION_ERROR", message: "Request validation failed.", requestId } }, { status: 400 });
   }
+  // Unexpected failure: keep details out of the response, but log them for diagnosis.
+  console.error(`[ai] ${requestId} unhandled error`, error);
   return Response.json({ error: { code: "INTERNAL_ERROR", message: "The AI request could not be completed.", requestId } }, { status: 500 });
 }

@@ -1,14 +1,19 @@
 # Gapir sound assets
 
-Place the production MP3 files in this directory using these exact names:
+Built by `python scripts/build-sounds.py <kenney_interfaceSounds.zip>`.
 
-- `button-tap.mp3`
-- `correct-answer.mp3`
-- `wrong-answer.mp3`
-- `lesson-complete.mp3`
-- `xp-reward.mp3`
-- `streak-reward.mp3`
-- `purchase.mp3`
-- `notification.mp3`
+| File | Source |
+|---|---|
+| `button-tap.mp3` | Kenney Interface Sounds, `select_002` |
+| `correct-answer.mp3` | Kenney Interface Sounds, `confirmation_001` |
+| `wrong-answer.mp3` | Kenney Interface Sounds, `question_004` |
+| `xp-reward.mp3` | Kenney Interface Sounds, `confirmation_003` |
+| `streak-reward.mp3` | Kenney Interface Sounds, `confirmation_004` |
+| `purchase.mp3` | Kenney Interface Sounds, `confirmation_002` |
+| `notification.mp3` | Kenney Interface Sounds, `question_003` |
+| `lesson-complete.mp3` | synthesised in `scripts/build-sounds.py` (own work) |
 
-Until an asset is added, the sound manager uses a short Web Audio tone and never blocks the interface.
+"Interface Sounds" by Kenney (www.kenney.nl) is released under Creative Commons Zero (CC0):
+free for any use, no attribution required. Pack: https://kenney.nl/assets/interface-sounds
+
+If a file is missing, the sound manager falls back to a short Web Audio tone.

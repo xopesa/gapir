@@ -81,8 +81,18 @@ export async function updateTutorMemoryAfterTurn(input: {
   const learnedWords = uniqueRecent(context.learnedWords, input.response.newWords[0]?.word ?? "", 30).filter(Boolean);
   const summary = buildMemorySummary({ level: input.level, weakTopics, frequentMistakes, recentTopics, learnedWords });
 
-  await prisma.$transaction(async (tx) => {
-    await tx.aiTutorMemory.update({
+  // Batch form only: Cloudflare D1 rejects interactive transactions.
+  const learnedWordWrites = input.response.newWords.flatMap((word) => {
+    const normalizedWord = word.word.normalize("NFKC").trim().toLocaleLowerCase();
+    if (!normalizedWord) return [];
+    return [prisma.aiLearnedWord.upsert({
+      where: { memoryId_language_normalizedWord: { memoryId: context.memory.id, language: word.language, normalizedWord } },
+      update: { word: word.word, translation: word.translation, timesSeen: { increment: 1 }, lastSeenAt: new Date() },
+      create: { memoryId: context.memory.id, word: word.word, normalizedWord, translation: word.translation, language: word.language },
+    })];
+  });
+  await prisma.$transaction([
+    prisma.aiTutorMemory.update({
       where: { id: context.memory.id },
       data: {
         level: input.level,
@@ -94,17 +104,9 @@ export async function updateTutorMemoryAfterTurn(input: {
         lastSessionId: input.sessionId,
         lastLessonAt: new Date(),
       },
-    });
-    for (const word of input.response.newWords) {
-      const normalizedWord = word.word.normalize("NFKC").trim().toLocaleLowerCase();
-      if (!normalizedWord) continue;
-      await tx.aiLearnedWord.upsert({
-        where: { memoryId_language_normalizedWord: { memoryId: context.memory.id, language: word.language, normalizedWord } },
-        update: { word: word.word, translation: word.translation, timesSeen: { increment: 1 }, lastSeenAt: new Date() },
-        create: { memoryId: context.memory.id, word: word.word, normalizedWord, translation: word.translation, language: word.language },
-      });
-    }
-  });
+    }),
+    ...learnedWordWrites,
+  ]);
 }
 
 export async function listTutorMemories(userId: string) {
