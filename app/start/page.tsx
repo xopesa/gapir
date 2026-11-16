@@ -6,11 +6,11 @@ import { isTeacherSite } from "@/src/server/site";
 
 // Entry point of the phone app: no login form, a guest session is created at once.
 export default async function StartPage({ searchParams }: { searchParams: Promise<{ returnTo?: string }> }) {
-  // No guests on the teacher's address: a teacher signs in with an account.
-  if (await isTeacherSite()) redirect("/login?returnTo=%2Fteacher");
+  const teacher = await isTeacherSite();
   if (await getCurrentUser()) {
     const returnTo = (await searchParams).returnTo;
     redirect(returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/");
   }
-  return <Suspense><StartPageClient /></Suspense>;
+  // On the teacher's address the guest is a teacher: Russian by default, straight to the office.
+  return <Suspense><StartPageClient teacher={teacher} /></Suspense>;
 }

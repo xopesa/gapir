@@ -22,18 +22,16 @@ export async function requireAdmin(returnTo = "/admin") {
   return user;
 }
 
-const teacherRoles: UserRole[] = ["TEACHER", "ADMIN", "OWNER"];
-
-/** Who may write quizzes and host games: teachers, and the admins who appoint them. */
-export function canTeach(role: UserRole | string) {
-  return teacherRoles.includes(role as UserRole);
-}
-
-/** Teacher API: only on the teacher's address and only for teachers. Throws UNAUTHORIZED / FORBIDDEN. */
+/**
+ * Teacher API: works only on the teacher's address. No account or role is
+ * needed there: like a learner, a teacher gets a guest session on the first
+ * visit, and quizzes and rooms belong to that session.
+ * Throws UNAUTHORIZED / FORBIDDEN.
+ */
 export async function requireTeacherApi() {
   const user = await getCurrentUser();
   if (!user) throw new Error("UNAUTHORIZED");
-  if (!canTeach(user.role) || !(await isTeacherSite())) throw new Error("FORBIDDEN");
+  if (!(await isTeacherSite())) throw new Error("FORBIDDEN");
   return user;
 }
 

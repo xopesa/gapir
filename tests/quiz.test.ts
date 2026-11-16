@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canAccessAdmin, canTeach } from "@/src/server/auth/authorization";
+import { canAccessAdmin } from "@/src/server/auth/authorization";
 import {
   ANSWER_GRACE_MS, canAnswerAt, generatePin, normalizePin, parseQuestions, phaseOf, questionExpired,
   questionsFromExercises, scoreAnswer, withPlaces, type ExerciseSource,
@@ -127,11 +127,7 @@ describe("quiz input", () => {
 });
 
 describe("teacher's site and role", () => {
-  it("lets teachers host quizzes without giving them the admin panel", () => {
-    expect(canTeach("TEACHER")).toBe(true);
-    expect(canTeach("OWNER")).toBe(true);
-    expect(canTeach("USER")).toBe(false);
-    expect(canTeach("CONTENT_EDITOR")).toBe(false);
+  it("keeps the admin panel closed for the old teacher role", () => {
     expect(canAccessAdmin("TEACHER")).toBe(false);
   });
 

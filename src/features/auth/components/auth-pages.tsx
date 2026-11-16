@@ -33,10 +33,10 @@ function safeReturnTo(value: string | null) {
 }
 
 /** "Start without an account": creates a guest session at once, then onboarding. */
-export function StartPageClient() {
+export function StartPageClient({ teacher = false }: { teacher?: boolean }) {
   const router = useRouter();
   const search = useSearchParams();
-  const { locale } = usePublicLocale("zh");
+  const { locale } = usePublicLocale(teacher ? "ru" : "zh");
   const dictionary = getDictionary(locale);
   const [failed, setFailed] = useState(false);
   const started = useRef(false);
@@ -49,9 +49,9 @@ export function StartPageClient() {
       setFailed(true); return;
     }
     const returnTo = safeReturnTo(search.get("returnTo"));
-    router.replace(returnTo && returnTo !== "/" ? returnTo : "/onboarding");
+    router.replace(teacher ? "/teacher" : returnTo && returnTo !== "/" ? returnTo : "/onboarding");
     router.refresh();
-  }, [locale, router, search]);
+  }, [locale, router, search, teacher]);
   useEffect(() => {
     if (started.current) return;
     started.current = true;
@@ -60,17 +60,16 @@ export function StartPageClient() {
   return <main className="guest-start">
     <Mascot kind="panda" mood={failed ? "sad" : "happy"} size={132} />
     <h1>Gapir</h1>
-    <p>{failed ? dictionary.common.error : dictionary.offline.starting}</p>
+    <p>{failed ? dictionary.common.error : teacher ? dictionary.common.loading : dictionary.offline.starting}</p>
     {failed && <Button type="button" size="lg" onClick={() => void start()}>{dictionary.offline.retry}</Button>}
-    <p className="guest-start-hint">{dictionary.offline.startHint}</p>
-    <Link href="/login">{dictionary.offline.haveAccount}</Link>
+    {!teacher && <p className="guest-start-hint">{dictionary.offline.startHint}</p>}
+    <Link href={teacher ? "/login?returnTo=%2Fteacher" : "/login"}>{dictionary.offline.haveAccount}</Link>
   </main>;
 }
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-/** `teacher`: the teacher address has no guests, so "start without an account" is not offered there. */
-export function LoginPageClient({ teacher = false }: { teacher?: boolean }) {
+export function LoginPageClient() {
   const router = useRouter();
   const search = useSearchParams();
   const { locale, setLocale } = usePublicLocale();
@@ -95,7 +94,7 @@ export function LoginPageClient({ teacher = false }: { teacher?: boolean }) {
       <Button type="submit" size="lg" loading={form.formState.isSubmitting}>{dictionary.auth.login} <ArrowRight weight="bold" /></Button>
     </form>
     <p className="auth-switch">{dictionary.auth.noAccount} <Link href="/register">{dictionary.auth.register}</Link></p>
-    {!teacher && <Link className="guest-start-link" href={`/start${search.get("returnTo") ? `?returnTo=${encodeURIComponent(search.get("returnTo") ?? "/")}` : ""}`}>{dictionary.offline.start} <ArrowRight weight="bold" /></Link>}
+    <Link className="guest-start-link" href={`/start${search.get("returnTo") ? `?returnTo=${encodeURIComponent(search.get("returnTo") ?? "/")}` : ""}`}>{dictionary.offline.start} <ArrowRight weight="bold" /></Link>
   </div></AuthFrame>;
 }
 

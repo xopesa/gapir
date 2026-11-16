@@ -141,6 +141,7 @@ button.quiz-option:disabled { cursor: default; }
 .teacher-section-title { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 1.1rem; }
 .teacher-section-title svg { color: var(--gx-lilac); }
 .teacher-section-text { margin: -6px 0 14px; color: var(--color-text-secondary); }
+.teacher-section-text a { color: var(--color-primary); font-weight: 800; }
 .teacher-ready-course { display: grid; gap: 8px; margin-bottom: 16px; }
 .teacher-ready-course h3 { margin: 0; color: var(--color-text-secondary); font-size: .86rem; font-weight: 800; }
 .teacher-shell .button-outline { background: var(--color-surface); }

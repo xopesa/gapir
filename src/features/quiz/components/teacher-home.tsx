@@ -19,7 +19,7 @@ async function postJson<T>(url: string, body: unknown): Promise<{ data?: T; erro
 const LIMITS = [5, 10, 15, 20];
 
 /** Teacher's start page: own quizzes, "new", "build from lessons" and the latest games. */
-export function TeacherHome({ dictionary, quizzes, games, lessonTree }: { dictionary: AppDictionary; quizzes: QuizListItem[]; games: Array<HostGameListItem & { createdLabel: string }>; lessonTree: LessonTree }) {
+export function TeacherHome({ dictionary, quizzes, games, lessonTree, guest }: { dictionary: AppDictionary; guest: boolean; quizzes: QuizListItem[]; games: Array<HostGameListItem & { createdLabel: string }>; lessonTree: LessonTree }) {
   const t = dictionary.quiz;
   const router = useRouter();
   const [busy, setBusy] = useState("");
@@ -133,6 +133,7 @@ export function TeacherHome({ dictionary, quizzes, games, lessonTree }: { dictio
 
       <section>
         <h2 className="teacher-section-title">{t.myQuizzes}</h2>
+        {guest && <p className="teacher-section-text">{t.guestNote} <Link href="/login?returnTo=%2Fteacher">{dictionary.auth.login}</Link></p>}
         {quizzes.length === 0 ? (
           <Card className="teacher-empty"><Trophy weight="duotone" /><strong>{t.noQuizzes}</strong><p>{t.noQuizzesText}</p></Card>
         ) : (
