@@ -7,6 +7,7 @@ import { THEME_INIT_SCRIPT } from "@/src/lib/theme/theme-manager";
 import { OfflineAgent } from "@/src/features/offline/offline-agent";
 import "./globals.css";
 import "./duo.css";
+import "./quiz.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",

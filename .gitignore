@@ -62,3 +62,6 @@ next-env.d.ts
 /android/
 /assets/
 /.audio-jobs.json
+
+# wrangler state of the teacher-address Worker
+**/.wrangler/

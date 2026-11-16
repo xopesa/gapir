@@ -12,6 +12,7 @@ const eslintConfig = defineConfig([
     ".codex-runtime/**",
     ".open-next/**",
     ".wrangler/**",
+    "**/.wrangler/**",
     "cloudflare-env.d.ts",
     "dist/**",
     "out/**",

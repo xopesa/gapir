@@ -123,3 +123,38 @@ export const userPreferenceSettingsSchema = z.object({
 }).refine((value) => Object.values(value).some((item) => item !== undefined), {
   message: "EMPTY_PREFERENCES",
 });
+
+// ── Class quiz ──────────────────────────────────────────────────────────────
+export const quizQuestionSchema = z
+  .object({
+    text: z.string().trim().min(1).max(300),
+    options: z.array(z.string().trim().min(1).max(120)).min(2).max(4),
+    correctIndex: z.number().int().min(0),
+    timeLimitSec: z.union([z.literal(10), z.literal(20), z.literal(30), z.literal(60)]).default(20),
+  })
+  .refine((value) => value.correctIndex < value.options.length, { path: ["correctIndex"], message: "CORRECT_OPTION_REQUIRED" })
+  .refine((value) => new Set(value.options).size === value.options.length, { path: ["options"], message: "OPTIONS_MUST_DIFFER" });
+
+export const quizSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(300).default(""),
+  questions: z.array(quizQuestionSchema).max(50).default([]),
+});
+
+export const quizFromLessonsSchema = z.object({
+  title: z.string().trim().max(120).optional(),
+  lessonIds: z.array(z.string().min(1)).min(1).max(30),
+  limit: z.number().int().min(1).max(50).default(15),
+});
+
+export const quizJoinSchema = z.object({
+  pin: z.string().min(1).max(20),
+  nickname: z.string().trim().min(1).max(20),
+});
+
+export const quizAnswerSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  optionIndex: z.number().int().min(0).max(3),
+});
+
+export const quizHostActionSchema = z.object({ action: z.enum(["start", "reveal", "next", "end"]) });

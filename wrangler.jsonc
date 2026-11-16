@@ -27,6 +27,10 @@
   ],
   "vars": {
     "SESSION_TTL_DAYS": "30",
+    // Learners' and teachers' addresses (src/server/site.ts). The teacher's one is
+    // served by the small Worker in workers/teacher, which passes requests here.
+    "LEARNER_ORIGIN": "https://gapir.gapir-web.workers.dev",
+    "TEACHER_ORIGIN": "https://gapir-teacher.gapir-web.workers.dev",
     "ENABLE_AI_ASSISTANT": "true",
     "ENABLE_AI_TUTOR": "true",
     "ENABLE_AI_VOICE_INPUT": "false",

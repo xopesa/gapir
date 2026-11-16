@@ -4,7 +4,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { PrismaClient } from "@/generated/prisma/client";
 
 // Bump when the Prisma schema changes so dev hot reload drops a stale client.
-const PRISMA_SCHEMA_VERSION = "20260804000000";
+const PRISMA_SCHEMA_VERSION = "20261116000001";
 
 // GAPIR_RUNTIME is inlined by next.config.ts: "cloudflare" for the Worker build
 // (OpenNext + D1), "node" for `next dev`, `next start`, tests and scripts (SQLite file).

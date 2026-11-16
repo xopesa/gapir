@@ -69,7 +69,8 @@ export function StartPageClient() {
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-export function LoginPageClient() {
+/** `teacher`: the teacher address has no guests, so "start without an account" is not offered there. */
+export function LoginPageClient({ teacher = false }: { teacher?: boolean }) {
   const router = useRouter();
   const search = useSearchParams();
   const { locale, setLocale } = usePublicLocale();
@@ -94,7 +95,7 @@ export function LoginPageClient() {
       <Button type="submit" size="lg" loading={form.formState.isSubmitting}>{dictionary.auth.login} <ArrowRight weight="bold" /></Button>
     </form>
     <p className="auth-switch">{dictionary.auth.noAccount} <Link href="/register">{dictionary.auth.register}</Link></p>
-    <Link className="guest-start-link" href={`/start${search.get("returnTo") ? `?returnTo=${encodeURIComponent(search.get("returnTo") ?? "/")}` : ""}`}>{dictionary.offline.start} <ArrowRight weight="bold" /></Link>
+    {!teacher && <Link className="guest-start-link" href={`/start${search.get("returnTo") ? `?returnTo=${encodeURIComponent(search.get("returnTo") ?? "/")}` : ""}`}>{dictionary.offline.start} <ArrowRight weight="bold" /></Link>}
   </div></AuthFrame>;
 }
 
