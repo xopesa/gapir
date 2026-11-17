@@ -91,6 +91,8 @@ export const en: typeof ru = {
     readyQuizzes: "Ready quizzes",
     readyQuizzesText: "One for every unit of a course. The questions are picked anew from the unit's exercises each time.",
     customize: "Make my own copy",
+    classQuizzes: "Class quizzes",
+    classQuizzesText: "Written from the classroom boards and lesson phrases. The questions are in Russian.",
     learnerSite: "Learners' site",
     guestNote: "You are working without an account: your own quizzes stay with this browser. To open them from any device, sign in first."
   },

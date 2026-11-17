@@ -91,6 +91,8 @@ export const uz: typeof ru = {
     readyQuizzes: "Tayyor kvizlar",
     readyQuizzesText: "Kursning har bir bölimi uçun bittadan. Savollar har safar bölim topşiriqlaridan qaytadan tanlanadi.",
     customize: "Özimga moslaş",
+    classQuizzes: "Darslar böyiça kvizlar",
+    classQuizzesText: "Doskadagi yozuvlar va darsdagi gaplar asosida tuzilgan. Savollar rus tilida.",
     learnerSite: "Öquvçilar sayti",
     guestNote: "Siz röyxatdan ötmasdan işlayapsiz: öz kvizlaringiz şu brauzerda saqlanadi. Ularni istalgan qurilmadan oçiş uçun avval akkauntga kiring."
   },

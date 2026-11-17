@@ -4,6 +4,7 @@ import {
   ANSWER_GRACE_MS, canAnswerAt, generatePin, normalizePin, parseQuestions, phaseOf, questionExpired,
   questionsFromExercises, scoreAnswer, withPlaces, type ExerciseSource,
 } from "@/src/lib/quiz/logic";
+import { getClassQuiz, listClassQuizzes } from "@/src/lib/quiz/class-quizzes";
 import { isTeacherHost } from "@/src/server/site";
 import { quizAnswerSchema, quizJoinSchema, quizSchema } from "@/src/server/validation/schemas";
 import { en } from "@/src/i18n/dictionaries/en";
@@ -16,6 +17,25 @@ function seeded(seed = 1) {
   let state = seed;
   return () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 2 ** 32; };
 }
+
+describe("hand-written class quizzes", () => {
+  it("are valid quizzes whose correct answer survives the shuffle", () => {
+    const first = listClassQuizzes(() => 0);
+    const again = listClassQuizzes(seeded(7));
+    expect(first.length).toBeGreaterThanOrEqual(3);
+    expect(new Set(first.map((quiz) => quiz.id)).size).toBe(first.length);
+    first.forEach((quiz, quizIndex) => {
+      expect(quizSchema.safeParse(quiz).success).toBe(true);
+      expect(quiz.questions.length).toBeGreaterThanOrEqual(10);
+      quiz.questions.forEach((question, index) => {
+        const other = again[quizIndex].questions[index];
+        expect(other.options[other.correctIndex]).toBe(question.options[question.correctIndex]);
+      });
+    });
+    expect(getClassQuiz("ru-whose")?.title).toBe("Чей? Чья? Чьё? Чьи?");
+    expect(getClassQuiz("missing")).toBeUndefined();
+  });
+});
 
 describe("class quiz rules", () => {
   it("gives 500–1000 points for a correct answer, more for a faster one, none for a wrong one", () => {

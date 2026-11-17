@@ -91,6 +91,8 @@ export const zh: typeof ru = {
     readyQuizzes: "现成的测验",
     readyQuizzesText: "每个单元一个。每次开始游戏时，都会从该单元的练习里重新抽题。",
     customize: "复制并修改",
+    classQuizzes: "课堂测验",
+    classQuizzesText: "根据课堂板书和课上的句子编写。题目是俄语。",
     learnerSite: "学生网站",
     guestNote: "你正在免注册使用：自己编写的测验只保存在这个浏览器里。想在任何设备上打开，请先登录账号。"
   },

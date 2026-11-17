@@ -5,6 +5,7 @@ import {
 } from "@/src/lib/quiz/logic";
 import { prisma } from "@/src/server/db";
 import { quizAnswerSchema, quizHostActionSchema, quizJoinSchema } from "@/src/server/validation/schemas";
+import { getClassQuiz } from "@/src/lib/quiz/class-quizzes";
 import { buildReadyQuiz } from "./quiz-service";
 
 // A live game. There is no socket: the teacher's screen and every phone ask for
@@ -55,6 +56,13 @@ export async function createGame(hostId: string, quizId: string) {
 export async function createReadyGame(hostId: string, moduleId: string) {
   const ready = await buildReadyQuiz(moduleId);
   return openGame(hostId, ready.title, ready.questions, null);
+}
+
+/** A game from a hand-written class quiz (src/lib/quiz/class-quizzes.ts). */
+export async function createClassGame(hostId: string, classQuizId: string) {
+  const quiz = getClassQuiz(classQuizId);
+  if (!quiz) throw new Error("QUIZ_NOT_FOUND");
+  return openGame(hostId, quiz.title, quiz.questions, null);
 }
 
 async function openGame(hostId: string, title: string, questions: QuizQuestionData[], quizId: string | null) {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Card } from "@/src/components/ui";
+import type { ClassQuiz } from "@/src/lib/quiz/class-quizzes";
 import type { HostGameListItem } from "@/src/server/services/quiz-game-service";
 import type { LessonTree, QuizListItem } from "@/src/server/services/quiz-service";
 import type { AppDictionary } from "@/src/types/app";
@@ -19,7 +20,7 @@ async function postJson<T>(url: string, body: unknown): Promise<{ data?: T; erro
 const LIMITS = [5, 10, 15, 20];
 
 /** Teacher's start page: own quizzes, "new", "build from lessons" and the latest games. */
-export function TeacherHome({ dictionary, quizzes, games, lessonTree, guest }: { dictionary: AppDictionary; guest: boolean; quizzes: QuizListItem[]; games: Array<HostGameListItem & { createdLabel: string }>; lessonTree: LessonTree }) {
+export function TeacherHome({ dictionary, quizzes, classQuizzes, games, lessonTree, guest }: { dictionary: AppDictionary; guest: boolean; quizzes: QuizListItem[]; classQuizzes: ClassQuiz[]; games: Array<HostGameListItem & { createdLabel: string }>; lessonTree: LessonTree }) {
   const t = dictionary.quiz;
   const router = useRouter();
   const [busy, setBusy] = useState("");
@@ -51,7 +52,18 @@ export function TeacherHome({ dictionary, quizzes, games, lessonTree, guest }: {
     const { data } = await postJson<{ quiz: { id: string } }>("/api/teacher/quizzes/from-lessons", { lessonIds: ids, limit: questions });
     if (data) router.push(`/teacher/quizzes/${data.quiz.id}`); else { setMessage(t.errGeneric); setBusy(""); }
   };
-  const readyCourses = lessonTree.map((course) => ({ ...course, modules: course.modules.filter((courseModule) => courseModule.readyQuestions > 0) })).filter((course) => course.modules.length);
+  const playClass = async (classQuizId: string) => {
+    setBusy(`play:${classQuizId}`); setMessage("");
+    const { data } = await postJson<{ game: { id: string } }>("/api/teacher/games", { classQuizId });
+    if (data) router.push(`/teacher/games/${data.game.id}`); else { setMessage(t.errGeneric); setBusy(""); }
+  };
+  /** A copy of a class quiz in "My quizzes", to edit. */
+  const copyClass = async (quiz: ClassQuiz) => {
+    setBusy(`copy:${quiz.id}`); setMessage("");
+    const { data } = await postJson<{ quiz: { id: string } }>("/api/teacher/quizzes", { title: quiz.title, questions: quiz.questions });
+    if (data) router.push(`/teacher/quizzes/${data.quiz.id}`); else { setMessage(t.errGeneric); setBusy(""); }
+  };
+  const readyCourses =lessonTree.map((course) => ({ ...course, modules: course.modules.filter((courseModule) => courseModule.readyQuestions > 0) })).filter((course) => course.modules.length);
   const play = async (quizId: string) => {
     setBusy(quizId); setMessage("");
     const { data, error } = await postJson<{ game: { id: string } }>("/api/teacher/games", { quizId });
@@ -106,6 +118,24 @@ export function TeacherHome({ dictionary, quizzes, games, lessonTree, guest }: {
             <Button type="button" disabled={!lessonIds.length} loading={busy === "lessons"} onClick={() => void buildFromLessons()}>{t.build}</Button>
           </div>
         </Card>
+      )}
+
+      {classQuizzes.length > 0 && (
+        <section>
+          <h2 className="teacher-section-title"><Sparkle weight="fill" /> {t.classQuizzes}</h2>
+          <p className="teacher-section-text">{t.classQuizzesText}</p>
+          <div className="teacher-quiz-list">
+            {classQuizzes.map((quiz) => (
+              <Card key={quiz.id} className="teacher-quiz">
+                <div className="teacher-quiz-copy"><strong>{quiz.title}</strong><span>{quiz.questions.length} {t.questionsCount}</span></div>
+                <div className="teacher-quiz-actions">
+                  <Button type="button" size="sm" loading={busy === `play:${quiz.id}`} onClick={() => void playClass(quiz.id)}><Play weight="fill" /> {t.play}</Button>
+                  <Button type="button" size="sm" variant="outline" loading={busy === `copy:${quiz.id}`} onClick={() => void copyClass(quiz)}><PencilSimple weight="bold" /> {t.customize}</Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </section>
       )}
 
       {readyCourses.length > 0 && (
