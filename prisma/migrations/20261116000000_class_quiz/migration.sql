@@ -1,0 +1,71 @@
+PRAGMA foreign_keys=ON;
+
+CREATE TABLE "Quiz" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "ownerId" TEXT NOT NULL,
+  "title" TEXT NOT NULL,
+  "description" TEXT NOT NULL DEFAULT '',
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL,
+  CONSTRAINT "Quiz_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "QuizQuestion" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "quizId" TEXT NOT NULL,
+  "order" INTEGER NOT NULL DEFAULT 0,
+  "text" TEXT NOT NULL,
+  "options" TEXT NOT NULL,
+  "correctIndex" INTEGER NOT NULL,
+  "timeLimitSec" INTEGER NOT NULL DEFAULT 20,
+  CONSTRAINT "QuizQuestion_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "QuizGame" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "quizId" TEXT,
+  "hostId" TEXT NOT NULL,
+  "pin" TEXT NOT NULL,
+  "status" TEXT NOT NULL DEFAULT 'LOBBY',
+  "title" TEXT NOT NULL,
+  "questions" TEXT NOT NULL,
+  "currentIndex" INTEGER NOT NULL DEFAULT -1,
+  "questionStartedAt" DATETIME,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "finishedAt" DATETIME,
+  CONSTRAINT "QuizGame_quizId_fkey" FOREIGN KEY ("quizId") REFERENCES "Quiz" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "QuizGame_hostId_fkey" FOREIGN KEY ("hostId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "QuizPlayer" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "gameId" TEXT NOT NULL,
+  "userId" TEXT NOT NULL,
+  "nickname" TEXT NOT NULL,
+  "score" INTEGER NOT NULL DEFAULT 0,
+  "joinedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "QuizPlayer_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "QuizGame" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "QuizPlayer_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE "QuizAnswer" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "gameId" TEXT NOT NULL,
+  "playerId" TEXT NOT NULL,
+  "questionIndex" INTEGER NOT NULL,
+  "optionIndex" INTEGER NOT NULL,
+  "correct" BOOLEAN NOT NULL,
+  "points" INTEGER NOT NULL DEFAULT 0,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "QuizAnswer_gameId_fkey" FOREIGN KEY ("gameId") REFERENCES "QuizGame" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT "QuizAnswer_playerId_fkey" FOREIGN KEY ("playerId") REFERENCES "QuizPlayer" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX "Quiz_ownerId_updatedAt_idx" ON "Quiz"("ownerId", "updatedAt");
+CREATE INDEX "QuizQuestion_quizId_order_idx" ON "QuizQuestion"("quizId", "order");
+CREATE INDEX "QuizGame_pin_status_idx" ON "QuizGame"("pin", "status");
+CREATE INDEX "QuizGame_hostId_createdAt_idx" ON "QuizGame"("hostId", "createdAt");
+CREATE UNIQUE INDEX "QuizPlayer_gameId_userId_key" ON "QuizPlayer"("gameId", "userId");
+CREATE INDEX "QuizPlayer_gameId_score_idx" ON "QuizPlayer"("gameId", "score");
+CREATE UNIQUE INDEX "QuizAnswer_playerId_questionIndex_key" ON "QuizAnswer"("playerId", "questionIndex");
+CREATE INDEX "QuizAnswer_gameId_questionIndex_idx" ON "QuizAnswer"("gameId", "questionIndex");

@@ -1,0 +1,14 @@
+{
+  // The teacher's address: https://gapir-teacher.gapir-web.workers.dev
+  // A small Worker that hands every request to the main "gapir" Worker. The
+  // main one sees which address was asked for and shows the teacher's office.
+  // Deploy (rarely needed, the site itself updates with the main Worker):
+  //   npx wrangler deploy --config workers/teacher/wrangler.jsonc
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "gapir-teacher",
+  "main": "index.js",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "services": [{ "binding": "APP", "service": "gapir" }],
+  "observability": { "enabled": true }
+}

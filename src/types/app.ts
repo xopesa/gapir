@@ -4,7 +4,7 @@ export interface AppUser {
   id: string;
   name: string;
   email: string;
-  role: "USER" | "CONTENT_EDITOR" | "ADMIN" | "OWNER";
+  role: "USER" | "TEACHER" | "CONTENT_EDITOR" | "ADMIN" | "OWNER";
   locale: Locale;
   xp: number;
   streak: number;

@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Card } from "@/src/components/ui";
 import type { AppUser } from "@/src/types/app";
 
-interface UserRow { id: string; name: string; email: string; role: "USER"|"CONTENT_EDITOR"|"ADMIN"|"OWNER"; locale: string; xp: number }
+interface UserRow { id: string; name: string; email: string; role: AppUser["role"]; locale: string; xp: number }
 
 export function UsersTable({ users, currentUser }: { users: UserRow[]; currentUser: AppUser }) {
   const router = useRouter(); const [message, setMessage] = useState("");

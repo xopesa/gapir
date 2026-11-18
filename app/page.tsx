@@ -5,8 +5,12 @@ import { requireUser } from "@/src/server/auth/authorization";
 import { toAppUser } from "@/src/server/presenters";
 import { getLearningDashboard } from "@/src/server/services/course-service";
 import { getPublicAiFlags } from "@/src/server/ai/config/public-flags";
+import { redirect } from "next/navigation";
+import { isTeacherSite } from "@/src/server/site";
 
 export default async function Home() {
+  // The teacher's address has no lessons: its front page is the teacher's office.
+  if (await isTeacherSite()) redirect("/teacher");
   const current = await requireUser("/");
   const user = toAppUser(current);
   const dictionary = getDictionary(user.locale);

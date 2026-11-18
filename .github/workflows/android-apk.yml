@@ -1,0 +1,83 @@
+# Builds the Gapir Android app (Capacitor shell around the deployed site) and
+# uploads a debug-signed APK as the "gapir-apk" artifact of the run.
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "capacitor.config.ts"
+      - "mobile/**"
+      - ".github/workflows/android-apk.yml"
+      - "public/gapir-logo.png"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Production address of the site; set the repository variable to override.
+      GAPIR_APP_URL: ${{ vars.GAPIR_APP_URL }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      # ubuntu runners ship the Android SDK (ANDROID_HOME); Gradle fetches
+      # the platform/build-tools it needs and the licenses are pre-accepted.
+
+      # Only the Capacitor CLI is needed here: skip native builds of server deps.
+      - run: npm ci --ignore-scripts
+
+      - name: Create the Android project
+        run: |
+          npx cap add android
+          mkdir -p assets
+          cp public/gapir-logo.png assets/icon-only.png
+          cp public/gapir-logo.png assets/icon-foreground.png
+          # A background image (not a colour): the colour option leaves the
+          # adaptive icon pointing at a missing mipmap/ic_launcher_background.
+          cp mobile/icon-background.png assets/icon-background.png
+          npx --yes @capacitor/assets@3.0.5 generate --android --splashBackgroundColor "#fdf5ec" --splashBackgroundColorDark "#19181d"
+          npx cap sync android
+          # Speaking exercises: the microphone and the phone speech service (Android 11+ needs the query); vibration feedback.
+          python3 - <<'PY'
+          import re
+          path = "android/app/src/main/AndroidManifest.xml"
+          text = open(path, encoding="utf-8").read()
+          if "RECORD_AUDIO" not in text:
+              text = text.replace("<application", '<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <uses-permission android:name="android.permission.VIBRATE" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n    <application', 1)
+              open(path, "w", encoding="utf-8").write(text)
+          PY
+          grep -n "RECORD_AUDIO\|VIBRATE\|RecognitionService" android/app/src/main/AndroidManifest.xml
+          # The app's version = the site's version it was built from (package.json).
+          VERSION=$(node -p "require('./package.json').version")
+          CODE=$(node -p "const [a,b,c]=require('./package.json').version.split('.').map(Number); a*10000+b*100+c")
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/; s/versionCode [0-9]*/versionCode $CODE/" android/app/build.gradle
+          grep -n "versionName\|versionCode" android/app/build.gradle
+          echo "GAPIR_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build the APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk "$GITHUB_WORKSPACE/Gapir-v$GAPIR_VERSION.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gapir-apk
+          path: Gapir-v*.apk
+          retention-days: 30

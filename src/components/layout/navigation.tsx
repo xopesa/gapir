@@ -4,6 +4,7 @@ import {
   BookOpen,
   Target,
   ShieldCheck,
+  Trophy,
   Sparkle,
   UserCircle,
 } from "@phosphor-icons/react";
@@ -16,10 +17,11 @@ function getNavItems(dictionary: AppDictionary, user: AppUser, aiFlags: PublicAi
   const items = [
     { href: "/", label: dictionary.nav.learn, icon: BookOpen },
     { href: "/practice", label: dictionary.nav.practice, icon: Target },
+    { href: "/quiz", label: dictionary.nav.quiz, icon: Trophy },
   ];
   if (aiFlags.assistantEnabled) items.push({ href: "/ai-assistant", label: dictionary.nav.aiAssistant, icon: Sparkle });
   items.push({ href: "/profile", label: dictionary.nav.profile, icon: UserCircle });
-  if (user.role !== "USER") items.push({ href: "/admin", label: dictionary.nav.admin, icon: ShieldCheck });
+  if (user.role !== "USER" && user.role !== "TEACHER") items.push({ href: "/admin", label: dictionary.nav.admin, icon: ShieldCheck });
   return items;
 }
 

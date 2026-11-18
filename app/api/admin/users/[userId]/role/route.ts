@@ -10,7 +10,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ us
   const { userId } = await params;
   if (userId === owner.id) return Response.json({ error: "CANNOT_CHANGE_SELF" }, { status: 400 });
   try {
-    const { role } = z.object({ role: z.enum(["USER", "CONTENT_EDITOR", "ADMIN", "OWNER"]) }).parse(await readJson(request));
+    const { role } = z.object({ role: z.enum(["USER", "TEACHER", "CONTENT_EDITOR", "ADMIN", "OWNER"]) }).parse(await readJson(request));
     const user = await prisma.user.update({ where: { id: userId }, data: { role }, select: { id: true, role: true } });
     return Response.json({ user });
   } catch (error) { return jsonError(error); }

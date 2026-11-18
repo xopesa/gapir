@@ -18,7 +18,7 @@ export function AppShell({ children, user, dictionary, aiFlags }: { children: Re
   useEffect(() => { applyTheme(user.preference?.theme ?? "system", true); }, [user.preference?.theme]);
   return (
     <>
-      <MobileHeader user={user} />
+      <MobileHeader user={user} dictionary={dictionary} />
       <div className="app-shell">
         <DesktopSidebar dictionary={dictionary} user={user} aiFlags={aiFlags} />
         <motion.main

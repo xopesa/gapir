@@ -183,7 +183,7 @@ export function AiTutorSessionScreen({ sessionId, dictionary, flags }: { session
   const busy = ["uploading", "recognizing", "thinking"].includes(displayedState) || recorder.recording;
   const summary = summarizeSession({ ...session, messages });
   const turns = groupChatTurns(messages);
-  const compactDirection = session.direction === "uz_to_zh" ? "O‘zbekcha → 中文" : "中文 → O‘zbekcha";
+  const compactDirection = session.direction === "uz_to_zh" ? "Özbekça → 中文" : "中文 → Özbekça";
 
   return (
     <div className="page-stack ai-page ai-chat-page">

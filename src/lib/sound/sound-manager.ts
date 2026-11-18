@@ -1,3 +1,4 @@
+import { setHapticsEnabled } from "../haptics";
 import { defaultSoundSettings, type SoundName, type SoundSettings } from "./sound-types";
 
 const sources: Record<SoundName, string> = {
@@ -64,6 +65,8 @@ export function unlockSound() {
 export function setSoundSettings(next: Partial<SoundSettings>) {
   settings = { ...settings, ...next, soundVolume: Math.min(1, Math.max(0, next.soundVolume ?? settings.soundVolume)) };
   for (const audio of cache.values()) audio.volume = settings.soundVolume;
+  // Vibration follows the "interface sounds" switch: one place to make the app quiet.
+  setHapticsEnabled(settings.effectsEnabled);
 }
 
 export function setSoundVolume(soundVolume: number) { setSoundSettings({ soundVolume }); }

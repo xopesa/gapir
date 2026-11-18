@@ -7,7 +7,7 @@ export const locales = ["uz", "ru", "zh", "en"] as const;
 export type Locale = (typeof locales)[number];
 
 export const localeLabels: Record<Locale, string> = {
-  uz: "O‘zbekcha",
+  uz: "Özbekça",
   ru: "Русский",
   zh: "中文",
   en: "English",

@@ -9,6 +9,7 @@ datasource db {
 
 enum UserRole {
   USER
+  TEACHER
   CONTENT_EDITOR
   ADMIN
   OWNER
@@ -66,6 +67,9 @@ model User {
   aiTutorMemories    AiTutorMemory[]
   aiProviderLogs     AiProviderLog[]
   aiUsageCosts       AiUsageCost[]
+  quizzes            Quiz[]
+  quizGames          QuizGame[]
+  quizPlayers        QuizPlayer[]
 
   @@index([role])
   @@index([createdAt])
@@ -420,4 +424,92 @@ model AiUsageCost {
   @@index([sessionId, createdAt])
   @@index([providerType, providerName, model])
   @@index([requestId])
+}
+
+// ── Live class quiz ─────────────────────────────────────────────────────────
+// A teacher writes a quiz, starts a game and shows its PIN; learners join from
+// the app. Game state is polled, so everything a poll reads stays small.
+
+model Quiz {
+  id          String         @id @default(cuid())
+  ownerId     String
+  title       String
+  description String         @default("")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  owner       User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  questions   QuizQuestion[]
+  games       QuizGame[]
+
+  @@index([ownerId, updatedAt])
+}
+
+model QuizQuestion {
+  id           String @id @default(cuid())
+  quizId       String
+  order        Int    @default(0)
+  text         String
+  // JSON array of 2–4 answer texts.
+  options      String
+  correctIndex Int
+  timeLimitSec Int    @default(20)
+  quiz         Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([quizId, order])
+}
+
+model QuizGame {
+  id                String       @id @default(cuid())
+  // Empty for a game started from a ready quiz (questions taken straight from a unit).
+  quizId            String?
+  hostId            String
+  pin               String
+  // LOBBY | QUESTION | REVEAL | FINISHED
+  status            String       @default("LOBBY")
+  title             String
+  // JSON snapshot of the questions, so editing the quiz never changes a running game.
+  questions         String
+  currentIndex      Int          @default(-1)
+  // Set a few seconds ahead: every phone opens the question at the same moment.
+  questionStartedAt DateTime?
+  createdAt         DateTime     @default(now())
+  finishedAt        DateTime?
+  quiz              Quiz?        @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  host              User         @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  players           QuizPlayer[]
+  answers           QuizAnswer[]
+
+  @@index([pin, status])
+  @@index([hostId, createdAt])
+}
+
+model QuizPlayer {
+  id       String       @id @default(cuid())
+  gameId   String
+  userId   String
+  nickname String
+  score    Int          @default(0)
+  joinedAt DateTime     @default(now())
+  game     QuizGame     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  user     User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers  QuizAnswer[]
+
+  @@unique([gameId, userId])
+  @@index([gameId, score])
+}
+
+model QuizAnswer {
+  id            String     @id @default(cuid())
+  gameId        String
+  playerId      String
+  questionIndex Int
+  optionIndex   Int
+  correct       Boolean
+  points        Int        @default(0)
+  createdAt     DateTime   @default(now())
+  game          QuizGame   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player        QuizPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([playerId, questionIndex])
+  @@index([gameId, questionIndex])
 }

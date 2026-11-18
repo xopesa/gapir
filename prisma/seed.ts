@@ -1,11 +1,36 @@
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaD1 } from "@prisma/adapter-d1";
 import { PrismaClient, type ExerciseType } from "../generated/prisma/client";
 import { hash } from "bcryptjs";
+import { seedCourseContent } from "./content/seed-course";
+import { zhUzCourse } from "./content/zh-uz-unit1";
+import { zhRuCourse } from "./content/zh-ru-unit1";
 
-const configuredUrl = process.env.DATABASE_URL ?? "file:./dev.db";
-const adapter = new PrismaBetterSqlite3({ url: configuredUrl === "file:./dev.db" ? "file:./prisma/dev.db" : configuredUrl });
-const prisma = new PrismaClient({ adapter });
+// SEED_TARGET: "sqlite" (default, prisma/dev.db), "d1-local" (Wrangler's local D1
+// used by `npm run cf:preview`) or "d1-remote" (Cloudflare D1 over the HTTP API).
+const seedTarget = process.env.SEED_TARGET ?? "sqlite";
+let disposePlatformProxy: (() => Promise<void>) | undefined;
+
+async function createAdapter() {
+  if (seedTarget === "d1-local") {
+    const { getPlatformProxy } = await import("wrangler");
+    const proxy = await getPlatformProxy<{ DB: D1Database }>();
+    disposePlatformProxy = proxy.dispose;
+    return new PrismaD1(proxy.env.DB);
+  }
+  if (seedTarget === "d1-remote") {
+    const { CLOUDFLARE_D1_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_DATABASE_ID } = process.env;
+    if (!CLOUDFLARE_D1_TOKEN || !CLOUDFLARE_ACCOUNT_ID || !CLOUDFLARE_DATABASE_ID) {
+      throw new Error("Set CLOUDFLARE_D1_TOKEN, CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_DATABASE_ID for SEED_TARGET=d1-remote");
+    }
+    return new PrismaD1({ CLOUDFLARE_D1_TOKEN, CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_DATABASE_ID });
+  }
+  const configuredUrl = process.env.DATABASE_URL ?? "file:./dev.db";
+  return new PrismaBetterSqlite3({ url: configuredUrl === "file:./dev.db" ? "file:./prisma/dev.db" : configuredUrl });
+}
+
+const prisma = new PrismaClient({ adapter: await createAdapter() });
 const localeData = ["ru", "uz", "zh", "en"] as const;
 
 async function upsertTranslations(
@@ -147,10 +172,17 @@ async function seedDemoCourse() {
 async function main() {
   await seedOwner();
   await seedDemoCourse();
+  for (const content of [zhUzCourse, zhRuCourse]) {
+    const course = await seedCourseContent(prisma, content);
+    console.log(`Course ${course.slug}: ${content.modules.reduce((sum, item) => sum + item.lessons.length, 0)} lessons`);
+  }
   console.log("Gapir seed completed");
 }
 
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
-}).finally(() => prisma.$disconnect());
+}).finally(async () => {
+  await prisma.$disconnect();
+  await disposePlatformProxy?.();
+});

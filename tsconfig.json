@@ -16,7 +16,7 @@
       "node",
       "react",
       "react-dom",
-      "@cloudflare/workers-types"
+      "./cloudflare-env.d.ts"
     ],
     "incremental": true,
     "plugins": [

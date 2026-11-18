@@ -13,6 +13,8 @@ export const loginSchema = z.object({
   locale: z.enum(locales).optional(),
 });
 
+export const guestSchema = z.object({ locale: z.enum(locales).default("zh") });
+
 export const registerSchema = z
   .object({
     name: z.string().trim().min(2).max(80),
@@ -31,13 +33,13 @@ export const onboardingSchema = z
   .object({
     locale: z.enum(locales),
     sourceLanguage: z.enum(["ru", "en", "zh", "uz"]),
-    targetLanguage: z.enum(["uz", "zh"]),
+    targetLanguage: z.enum(["uz", "zh", "ru"]),
     dailyGoalMinutes: z.union([z.literal(5), z.literal(10), z.literal(15), z.literal(20)]),
     timezone: z.string().min(1).default("Asia/Tashkent"),
   })
   .refine(
     (value) =>
-      ["ru:uz", "en:uz", "zh:uz", "uz:zh", "ru:zh", "en:zh"].includes(
+      ["ru:uz", "en:uz", "zh:uz", "uz:zh", "ru:zh", "en:zh", "zh:ru"].includes(
         `${value.sourceLanguage}:${value.targetLanguage}`,
       ),
     { message: "Это направление пока недоступно", path: ["sourceLanguage"] },
@@ -51,7 +53,7 @@ const translationSchema = z.object({
 
 export const createCourseSchema = z.object({
   sourceLanguage: z.enum(["ru", "en", "zh", "uz"]),
-  targetLanguage: z.enum(["uz", "zh"]),
+  targetLanguage: z.enum(["uz", "zh", "ru"]),
   level: z.string().trim().min(1).max(16),
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
@@ -121,3 +123,38 @@ export const userPreferenceSettingsSchema = z.object({
 }).refine((value) => Object.values(value).some((item) => item !== undefined), {
   message: "EMPTY_PREFERENCES",
 });
+
+// ── Class quiz ──────────────────────────────────────────────────────────────
+export const quizQuestionSchema = z
+  .object({
+    text: z.string().trim().min(1).max(300),
+    options: z.array(z.string().trim().min(1).max(120)).min(2).max(4),
+    correctIndex: z.number().int().min(0),
+    timeLimitSec: z.union([z.literal(10), z.literal(20), z.literal(30), z.literal(60)]).default(20),
+  })
+  .refine((value) => value.correctIndex < value.options.length, { path: ["correctIndex"], message: "CORRECT_OPTION_REQUIRED" })
+  .refine((value) => new Set(value.options).size === value.options.length, { path: ["options"], message: "OPTIONS_MUST_DIFFER" });
+
+export const quizSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  description: z.string().trim().max(300).default(""),
+  questions: z.array(quizQuestionSchema).max(50).default([]),
+});
+
+export const quizFromLessonsSchema = z.object({
+  title: z.string().trim().max(120).optional(),
+  lessonIds: z.array(z.string().min(1)).min(1).max(30),
+  limit: z.number().int().min(1).max(50).default(15),
+});
+
+export const quizJoinSchema = z.object({
+  pin: z.string().min(1).max(20),
+  nickname: z.string().trim().min(1).max(20),
+});
+
+export const quizAnswerSchema = z.object({
+  questionIndex: z.number().int().min(0),
+  optionIndex: z.number().int().min(0).max(3),
+});
+
+export const quizHostActionSchema = z.object({ action: z.enum(["start", "reveal", "next", "end"]) });

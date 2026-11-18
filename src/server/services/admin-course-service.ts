@@ -64,8 +64,9 @@ export async function setLessonStatus(lessonId: string, status: "DRAFT" | "PUBLI
 export async function updateLesson(lessonId: string, input: unknown) {
   const data = updateLessonSchema.parse(input);
   const { translations, videoUrl, audioUrl, thumbnailUrl, ...lesson } = data;
-  return prisma.$transaction(async (tx) => {
-    await tx.lesson.update({
+  // Batch form only: Cloudflare D1 rejects interactive transactions.
+  await prisma.$transaction([
+    prisma.lesson.update({
       where: { id: lessonId },
       data: {
         ...lesson,
@@ -73,16 +74,14 @@ export async function updateLesson(lessonId: string, input: unknown) {
         ...(audioUrl !== undefined ? { audioUrl: audioUrl || null } : {}),
         ...(thumbnailUrl !== undefined ? { thumbnailUrl: thumbnailUrl || null } : {}),
       },
-    });
-    for (const item of translations ?? []) {
-      await tx.lessonTranslation.upsert({
-        where: { lessonId_locale: { lessonId, locale: item.locale } },
-        update: { title: item.title, description: item.description, theory: item.theory },
-        create: { lessonId, ...item },
-      });
-    }
-    return tx.lesson.findUniqueOrThrow({ where: { id: lessonId }, include: { translations: true } });
-  });
+    }),
+    ...(translations ?? []).map((item) => prisma.lessonTranslation.upsert({
+      where: { lessonId_locale: { lessonId, locale: item.locale } },
+      update: { title: item.title, description: item.description, theory: item.theory },
+      create: { lessonId, ...item },
+    })),
+  ]);
+  return prisma.lesson.findUniqueOrThrow({ where: { id: lessonId }, include: { translations: true } });
 }
 
 export async function listCourses() {
